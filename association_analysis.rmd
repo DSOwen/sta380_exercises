@@ -8,11 +8,53 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 library(mosaic)
 library(tidyverse)
-
+library(arules)
+library(arulesViz)
+groceries_df = read.delim("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", header = FALSE, sep = ",", na.strings = c("",NaN))
+groceries = read.transactions("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", format = "basket", sep = ",")
 ```
 
-## View groceries.txt
+## The Data in Question
+
+The data to be examined contains fifteen thousand grocery store transactions. Each transaction contains between 1 and 4 items, inclusive. The head of the dataset is previewed below.
+
+```{r include = FALSE}
+head(groceries_df)
+```
+
+Before looking for association rules apriori, it is important to examine the frequency with which each item is purchased in case there is a heavily skewed support distribution. Such analysis gives an indication of the importance of lift in the rules to be produced.
 
 ```{r}
-# sample code
+occurrences = sort(table(unlist(groceries_df)))
+#plot(sort(occurrences), xlab = "items purchased", ylab = "occurrences")
+df = as.data.frame(occurrences)
+ggplot(df, aes(x=Var1, y=Freq)) + 
+  geom_bar(stat='identity') +
+  ggtitle("Frequency of Items in Groceries.txt") +
+  xlab("Purchased Item (Sorted)") +
+  ylab("Occurrences")+
+  theme(
+    axis.text.x = element_blank(),
+    plot.title = element_text(size = 15, face = "bold", hjust = 0.5)
+    )
+```
+
+```{r}
+rules = apriori(groceries, 
+	parameter=list(support=.005, confidence=.1, maxlen=5, minlen = 2))
+```
+
+```{r}
+#arules::inspect(rules)
+
+arules::inspect(subset(rules, subset=lift > 3 & confidence > 0.2))
+```
+
+
+
+```{r}
+# plot all the rules in (support, confidence) space
+# notice that high lift rules tend to have low support
+plot(rules)
+
 ```
