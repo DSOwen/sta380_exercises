@@ -5,216 +5,141 @@ Association Rule Mining
 
 The data to be examined contains fifteen thousand grocery store
 transactions. Each transaction contains between 1 and 4 items,
-inclusive. The head of the dataset is previewed below.
+inclusive. The head of the dataset is previewed
+below.
+
+| V1               | V2                  | V3             | V4                       |
+| :--------------- | :------------------ | :------------- | :----------------------- |
+| citrus fruit     | semi-finished bread | margarine      | ready soups              |
+| tropical fruit   | yogurt              | coffee         | NA                       |
+| whole milk       | NA                  | NA             | NA                       |
+| pip fruit        | yogurt              | cream cheese   | meat spreads             |
+| other vegetables | whole milk          | condensed milk | long life bakery product |
+| whole milk       | butter              | yogurt         | rice                     |
 
 Before looking for association rules apriori, it is important to examine
 the frequency with which each item is purchased in case there is a
 heavily skewed support distribution. Such analysis gives an indication
 of the importance of lift in the rules to be produced.
 
-``` r
-occurrences = sort(table(unlist(groceries_df)))
-#plot(sort(occurrences), xlab = "items purchased", ylab = "occurrences")
-df = as.data.frame(occurrences)
-ggplot(df, aes(x=Var1, y=Freq)) + 
-  geom_bar(stat='identity') +
-  ggtitle("Frequency of Items in Groceries.txt") +
-  xlab("Purchased Item (Sorted)") +
-  ylab("Occurrences")+
-  theme(
-    axis.text.x = element_blank(),
-    plot.title = element_text(size = 15, face = "bold", hjust = 0.5)
-    )
-```
-
 ![](association_analysis_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
-``` r
-rules = apriori(groceries, 
-    parameter=list(support=.005, confidence=.1, maxlen=5, minlen = 2))
-```
+A closer inspection of the far right spike finds that the following
+items are very common in the dataset. Here they are:
 
-    ## Apriori
-    ## 
-    ## Parameter specification:
-    ##  confidence minval smax arem  aval originalSupport maxtime support minlen
-    ##         0.1    0.1    1 none FALSE            TRUE       5   0.005      2
-    ##  maxlen target   ext
-    ##       5  rules FALSE
-    ## 
-    ## Algorithmic control:
-    ##  filter tree heap memopt load sort verbose
-    ##     0.1 TRUE TRUE  FALSE TRUE    2    TRUE
-    ## 
-    ## Absolute minimum support count: 49 
-    ## 
-    ## set item appearances ...[0 item(s)] done [0.00s].
-    ## set transactions ...[169 item(s), 9835 transaction(s)] done [0.00s].
-    ## sorting and recoding items ... [120 item(s)] done [0.00s].
-    ## creating transaction tree ... done [0.00s].
-    ## checking subsets of size 1 2 3 4 done [0.00s].
-    ## writing ... [1574 rule(s)] done [0.00s].
-    ## creating S4 object  ... done [0.00s].
+| Item             | Occurrences |
+| :--------------- | ----------: |
+| yogurt           |        1372 |
+| soda             |        1715 |
+| rolls/buns       |        1809 |
+| other vegetables |        1903 |
+| whole milk       |        2513 |
+
+None of the most common items are surprising to see in the table. Given
+that information, a threshold for minimum lift will be considered
+carefully, and rules produced which include the above items will be
+heavily scrutinized.
+
+## Generate Rules
+
+First, let’s examine every rule generated with at least 100 instances of
+the associated purchase pattern (support) and a 10% chance of the right
+hand item(s) being purchased with the left-hand item. Since some items
+are much more frequent than the others, we will also set an initial lift
+threshold of 1, so we know there’s at least some significance to the
+pattern.
 
 ``` r
-#arules::inspect(rules)
-
-arules::inspect(subset(rules, subset=lift > 3 & confidence > 0.2))
+# fix this
+sub_rules
 ```
 
-    ##      lhs                        rhs                         support confidence     lift count
-    ## [1]  {herbs}                 => {root vegetables}       0.007015760  0.4312500 3.956477    69
-    ## [2]  {sliced cheese}         => {sausage}               0.007015760  0.2863071 3.047435    69
-    ## [3]  {berries}               => {whipped/sour cream}    0.009049314  0.2721713 3.796886    89
-    ## [4]  {beef}                  => {root vegetables}       0.017386884  0.3313953 3.040367   171
-    ## [5]  {onions,                                                                                
-    ##       root vegetables}       => {other vegetables}      0.005693950  0.6021505 3.112008    56
-    ## [6]  {onions,                                                                                
-    ##       other vegetables}      => {root vegetables}       0.005693950  0.4000000 3.669776    56
-    ## [7]  {chicken,                                                                               
-    ##       whole milk}            => {root vegetables}       0.005998983  0.3410405 3.128855    59
-    ## [8]  {frozen vegetables,                                                                     
-    ##       other vegetables}      => {root vegetables}       0.006100661  0.3428571 3.145522    60
-    ## [9]  {beef,                                                                                  
-    ##       other vegetables}      => {root vegetables}       0.007930859  0.4020619 3.688692    78
-    ## [10] {beef,                                                                                  
-    ##       whole milk}            => {root vegetables}       0.008032537  0.3779904 3.467851    79
-    ## [11] {curd,                                                                                  
-    ##       whole milk}            => {whipped/sour cream}    0.005897306  0.2256809 3.148329    58
-    ## [12] {curd,                                                                                  
-    ##       tropical fruit}        => {yogurt}                0.005287239  0.5148515 3.690645    52
-    ## [13] {margarine,                                                                             
-    ##       whole milk}            => {domestic eggs}         0.005185562  0.2142857 3.377404    51
-    ## [14] {butter,                                                                                
-    ##       whole milk}            => {domestic eggs}         0.005998983  0.2177122 3.431409    59
-    ## [15] {butter,                                                                                
-    ##       other vegetables}      => {whipped/sour cream}    0.005795628  0.2893401 4.036397    57
-    ## [16] {other vegetables,                                                                      
-    ##       whipped/sour cream}    => {butter}                0.005795628  0.2007042 3.621883    57
-    ## [17] {butter,                                                                                
-    ##       whole milk}            => {whipped/sour cream}    0.006710727  0.2435424 3.397503    66
-    ## [18] {whipped/sour cream,                                                                    
-    ##       whole milk}            => {butter}                0.006710727  0.2082019 3.757185    66
-    ## [19] {butter,                                                                                
-    ##       other vegetables}      => {root vegetables}       0.006609049  0.3299492 3.027100    65
-    ## [20] {domestic eggs,                                                                         
-    ##       other vegetables}      => {whipped/sour cream}    0.005083884  0.2283105 3.185012    50
-    ## [21] {domestic eggs,                                                                         
-    ##       other vegetables}      => {root vegetables}       0.007320793  0.3287671 3.016254    72
-    ## [22] {pip fruit,                                                                             
-    ##       whipped/sour cream}    => {other vegetables}      0.005592272  0.6043956 3.123610    55
-    ## [23] {tropical fruit,                                                                        
-    ##       whipped/sour cream}    => {yogurt}                0.006202339  0.4485294 3.215224    61
-    ## [24] {other vegetables,                                                                      
-    ##       tropical fruit}        => {whipped/sour cream}    0.007829181  0.2181303 3.042995    77
-    ## [25] {root vegetables,                                                                       
-    ##       yogurt}                => {whipped/sour cream}    0.006405694  0.2480315 3.460127    63
-    ## [26] {other vegetables,                                                                      
-    ##       yogurt}                => {whipped/sour cream}    0.010167768  0.2341920 3.267062   100
-    ## [27] {citrus fruit,                                                                          
-    ##       pip fruit}             => {tropical fruit}        0.005592272  0.4044118 3.854060    55
-    ## [28] {pip fruit,                                                                             
-    ##       tropical fruit}        => {citrus fruit}          0.005592272  0.2736318 3.306105    55
-    ## [29] {citrus fruit,                                                                          
-    ##       tropical fruit}        => {pip fruit}             0.005592272  0.2806122 3.709437    55
-    ## [30] {pip fruit,                                                                             
-    ##       root vegetables}       => {tropical fruit}        0.005287239  0.3398693 3.238967    52
-    ## [31] {root vegetables,                                                                       
-    ##       tropical fruit}        => {pip fruit}             0.005287239  0.2512077 3.320737    52
-    ## [32] {pip fruit,                                                                             
-    ##       yogurt}                => {tropical fruit}        0.006405694  0.3559322 3.392048    63
-    ## [33] {other vegetables,                                                                      
-    ##       pip fruit}             => {tropical fruit}        0.009456024  0.3618677 3.448613    93
-    ## [34] {other vegetables,                                                                      
-    ##       tropical fruit}        => {pip fruit}             0.009456024  0.2634561 3.482649    93
-    ## [35] {citrus fruit,                                                                          
-    ##       root vegetables}       => {tropical fruit}        0.005693950  0.3218391 3.067139    56
-    ## [36] {root vegetables,                                                                       
-    ##       tropical fruit}        => {citrus fruit}          0.005693950  0.2705314 3.268644    56
-    ## [37] {other vegetables,                                                                      
-    ##       tropical fruit}        => {citrus fruit}          0.009049314  0.2521246 3.046248    89
-    ## [38] {citrus fruit,                                                                          
-    ##       root vegetables}       => {other vegetables}      0.010371124  0.5862069 3.029608   102
-    ## [39] {citrus fruit,                                                                          
-    ##       other vegetables}      => {root vegetables}       0.010371124  0.3591549 3.295045   102
-    ## [40] {rolls/buns,                                                                            
-    ##       shopping bags}         => {sausage}               0.005998983  0.3072917 3.270794    59
-    ## [41] {root vegetables,                                                                       
-    ##       yogurt}                => {tropical fruit}        0.008134215  0.3149606 3.001587    80
-    ## [42] {root vegetables,                                                                       
-    ##       tropical fruit}        => {other vegetables}      0.012302999  0.5845411 3.020999   121
-    ## [43] {other vegetables,                                                                      
-    ##       tropical fruit}        => {root vegetables}       0.012302999  0.3427762 3.144780   121
-    ## [44] {fruit/vegetable juice,                                                                 
-    ##       other vegetables,                                                                      
-    ##       whole milk}            => {yogurt}                0.005083884  0.4854369 3.479790    50
-    ## [45] {other vegetables,                                                                      
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {fruit/vegetable juice} 0.005083884  0.2283105 3.158135    50
-    ## [46] {other vegetables,                                                                      
-    ##       whipped/sour cream,                                                                    
-    ##       whole milk}            => {root vegetables}       0.005185562  0.3541667 3.249281    51
-    ## [47] {other vegetables,                                                                      
-    ##       root vegetables,                                                                       
-    ##       whole milk}            => {whipped/sour cream}    0.005185562  0.2236842 3.120474    51
-    ## [48] {other vegetables,                                                                      
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {whipped/sour cream}    0.005592272  0.2511416 3.503514    55
-    ## [49] {pip fruit,                                                                             
-    ##       root vegetables,                                                                       
-    ##       whole milk}            => {other vegetables}      0.005490595  0.6136364 3.171368    54
-    ## [50] {other vegetables,                                                                      
-    ##       pip fruit,                                                                             
-    ##       whole milk}            => {root vegetables}       0.005490595  0.4060150 3.724961    54
-    ## [51] {other vegetables,                                                                      
-    ##       root vegetables,                                                                       
-    ##       whole milk}            => {pip fruit}             0.005490595  0.2368421 3.130836    54
-    ## [52] {other vegetables,                                                                      
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {pip fruit}             0.005083884  0.2283105 3.018056    50
-    ## [53] {citrus fruit,                                                                          
-    ##       root vegetables,                                                                       
-    ##       whole milk}            => {other vegetables}      0.005795628  0.6333333 3.273165    57
-    ## [54] {citrus fruit,                                                                          
-    ##       other vegetables,                                                                      
-    ##       whole milk}            => {root vegetables}       0.005795628  0.4453125 4.085493    57
-    ## [55] {other vegetables,                                                                      
-    ##       root vegetables,                                                                       
-    ##       whole milk}            => {citrus fruit}          0.005795628  0.2500000 3.020577    57
-    ## [56] {root vegetables,                                                                       
-    ##       tropical fruit,                                                                        
-    ##       whole milk}            => {yogurt}                0.005693950  0.4745763 3.401937    56
-    ## [57] {tropical fruit,                                                                        
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {root vegetables}       0.005693950  0.3758389 3.448112    56
-    ## [58] {root vegetables,                                                                       
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {tropical fruit}        0.005693950  0.3916084 3.732043    56
-    ## [59] {root vegetables,                                                                       
-    ##       tropical fruit,                                                                        
-    ##       whole milk}            => {other vegetables}      0.007015760  0.5847458 3.022057    69
-    ## [60] {other vegetables,                                                                      
-    ##       tropical fruit,                                                                        
-    ##       whole milk}            => {root vegetables}       0.007015760  0.4107143 3.768074    69
-    ## [61] {other vegetables,                                                                      
-    ##       tropical fruit,                                                                        
-    ##       whole milk}            => {yogurt}                0.007625826  0.4464286 3.200164    75
-    ## [62] {other vegetables,                                                                      
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {tropical fruit}        0.007625826  0.3424658 3.263712    75
-    ## [63] {other vegetables,                                                                      
-    ##       whole milk,                                                                            
-    ##       yogurt}                => {root vegetables}       0.007829181  0.3515982 3.225716    77
-    ## [64] {other vegetables,                                                                      
-    ##       rolls/buns,                                                                            
-    ##       whole milk}            => {root vegetables}       0.006202339  0.3465909 3.179778    61
+    ## NULL
 
 ``` r
-# plot all the rules in (support, confidence) space
-# notice that high lift rules tend to have low support
-plot(rules)
+#kable(head(sub_rules,15), format = "markdown", row.names = FALSE)
 ```
+
+Under these conditions, 500 rules are produced. Even a small preview
+shows that ‘whole milk’ is still overly present in the rules, even with
+the restriction on
+    lift.
 
     ## To reduce overplotting, jitter is added! Use jitter = 0 to prevent jitter.
 
-![](association_analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](association_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+The threshold with be raised, as will it for confidence, to prune the
+rules.
+
+![](association_analysis_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+Now there are about 30. As displayed above, the most significant rules
+have been picked. These include many larger frequent itemsets with a few
+small frequent
+itemsets.
+
+``` r
+kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
+```
+
+    ##      lhs                     rhs                     support confidence     lift count
+    ## [1]  {beef}               => {root vegetables}    0.01738688  0.3313953 3.040367   171
+    ## [2]  {root vegetables}    => {beef}               0.01738688  0.1595149 3.040367   171
+    ## [3]  {curd}               => {whipped/sour cream} 0.01047280  0.1965649 2.742150   103
+    ## [4]  {whipped/sour cream} => {curd}               0.01047280  0.1460993 2.742150   103
+    ## [5]  {butter}             => {whipped/sour cream} 0.01016777  0.1834862 2.559698   100
+    ## [6]  {whipped/sour cream} => {butter}             0.01016777  0.1418440 2.559698   100
+    ## [7]  {pip fruit}          => {tropical fruit}     0.02043721  0.2701613 2.574648   201
+    ## [8]  {tropical fruit}     => {pip fruit}          0.02043721  0.1947674 2.574648   201
+    ## [9]  {curd,                                                                           
+    ##       whole milk}         => {yogurt}             0.01006609  0.3852140 2.761356    99
+    ## [10] {whole milk,                                                                     
+    ##       yogurt}             => {curd}               0.01006609  0.1796733 3.372304    99
+    ## [11] {other vegetables,                                                               
+    ##       whole milk}         => {butter}             0.01148958  0.1535326 2.770630   113
+    ## [12] {other vegetables,                                                               
+    ##       whole milk}         => {domestic eggs}      0.01230300  0.1644022 2.591178   121
+    ## [13] {whipped/sour cream,                                                             
+    ##       yogurt}             => {other vegetables}   0.01016777  0.4901961 2.533410   100
+    ## [14] {other vegetables,                                                               
+    ##       whipped/sour cream} => {yogurt}             0.01016777  0.3521127 2.524073   100
+    ## [15] {other vegetables,                                                               
+    ##       yogurt}             => {whipped/sour cream} 0.01016777  0.2341920 3.267062   100
+    ## [16] {whole milk,                                                                     
+    ##       yogurt}             => {whipped/sour cream} 0.01087951  0.1941924 2.709053   107
+    ## [17] {other vegetables,                                                               
+    ##       whole milk}         => {whipped/sour cream} 0.01464159  0.1956522 2.729417   144
+    ## [18] {citrus fruit,                                                                   
+    ##       root vegetables}    => {other vegetables}   0.01037112  0.5862069 3.029608   102
+    ## [19] {citrus fruit,                                                                   
+    ##       other vegetables}   => {root vegetables}    0.01037112  0.3591549 3.295045   102
+    ## [20] {other vegetables,                                                               
+    ##       root vegetables}    => {citrus fruit}       0.01037112  0.2188841 2.644626   102
+    ## [21] {root vegetables,                                                                
+    ##       tropical fruit}     => {other vegetables}   0.01230300  0.5845411 3.020999   121
+    ## [22] {other vegetables,                                                               
+    ##       tropical fruit}     => {root vegetables}    0.01230300  0.3427762 3.144780   121
+    ## [23] {tropical fruit,                                                                 
+    ##       whole milk}         => {root vegetables}    0.01199797  0.2836538 2.602365   118
+    ## [24] {other vegetables,                                                               
+    ##       yogurt}             => {tropical fruit}     0.01230300  0.2833724 2.700550   121
+    ## [25] {tropical fruit,                                                                 
+    ##       whole milk}         => {yogurt}             0.01514997  0.3581731 2.567516   149
+    ## [26] {whole milk,                                                                     
+    ##       yogurt}             => {tropical fruit}     0.01514997  0.2704174 2.577089   149
+    ## [27] {root vegetables,                                                                
+    ##       yogurt}             => {other vegetables}   0.01291307  0.5000000 2.584078   127
+    ## [28] {other vegetables,                                                               
+    ##       yogurt}             => {root vegetables}    0.01291307  0.2974239 2.728698   127
+    ## [29] {rolls/buns,                                                                     
+    ##       root vegetables}    => {other vegetables}   0.01220132  0.5020921 2.594890   120
+    ## [30] {other vegetables,                                                               
+    ##       rolls/buns}         => {root vegetables}    0.01220132  0.2863962 2.627525   120
+    ## [31] {other vegetables,                                                               
+    ##       whole milk}         => {root vegetables}    0.02318251  0.3097826 2.842082   228
+
+    ## Warning in kable_markdown(x = structure(character(0), .Dim = c(0L,
+    ## 0L), .Dimnames = list(: The table should have a header (column names)
+
+|| || || ||

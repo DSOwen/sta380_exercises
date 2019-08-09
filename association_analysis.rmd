@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 library(mosaic)
 library(tidyverse)
+library(knitr)
 library(arules)
 library(arulesViz)
 groceries_df = read.delim("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", header = FALSE, sep = ",", na.strings = c("",NaN))
@@ -18,17 +19,16 @@ groceries = read.transactions("https://raw.githubusercontent.com/jgscott/STA380/
 
 The data to be examined contains fifteen thousand grocery store transactions. Each transaction contains between 1 and 4 items, inclusive. The head of the dataset is previewed below.
 
-```{r include = FALSE}
-head(groceries_df)
+```{r echo = FALSE}
+kable(head(groceries_df), format = "markdown")
 ```
 
 Before looking for association rules apriori, it is important to examine the frequency with which each item is purchased in case there is a heavily skewed support distribution. Such analysis gives an indication of the importance of lift in the rules to be produced.
 
-```{r}
-occurrences = sort(table(unlist(groceries_df)))
-#plot(sort(occurrences), xlab = "items purchased", ylab = "occurrences")
-df = as.data.frame(occurrences)
-ggplot(df, aes(x=Var1, y=Freq)) + 
+```{r echo = FALSE}
+occurrences = as.data.frame(sort(table(unlist(groceries_df))))
+
+ggplot(occurrences, aes(x=Var1, y=Freq)) +
   geom_bar(stat='identity') +
   ggtitle("Frequency of Items in Groceries.txt") +
   xlab("Purchased Item (Sorted)") +
@@ -39,22 +39,49 @@ ggplot(df, aes(x=Var1, y=Freq)) +
     )
 ```
 
-```{r}
+A closer inspection of the far right spike finds that the following items are very common in the dataset. Here they are:
+
+```{r echo = FALSE}
+v_freq = occurrences[occurrences$Freq > 1250,]
+knitr::kable(head(v_freq), format = "markdown", row.names = FALSE, col.names = c("Item","Occurrences"))
+```
+
+None of the most common items are surprising to see in the table. Given that information, a threshold for minimum lift will be considered carefully, and rules produced which include the above items will be heavily scrutinized.
+
+## Generate Rules
+
+First, let's examine every rule generated with at least 100 instances of the associated purchase pattern (support) and a 10% chance of the right hand item(s) being purchased with the left-hand item. Since some items are much more frequent than the others, we will also set an initial lift threshold of 1, so we know there's at least some significance to the pattern.
+
+```{r include = F}
 rules = apriori(groceries, 
-	parameter=list(support=.005, confidence=.1, maxlen=5, minlen = 2))
+	parameter=list(support=100/15000, confidence=.1, minlen = 2)
+	)
+sub_rules = arules::inspect(subset(rules, subset=lift > 1 & confidence > 0.2))
 ```
 
 ```{r}
-#arules::inspect(rules)
-
-arules::inspect(subset(rules, subset=lift > 3 & confidence > 0.2))
+# fix this
+sub_rules
+#kable(head(sub_rules,15), format = "markdown", row.names = FALSE)
 ```
 
+Under these conditions, 500 rules are produced. Even a small preview shows that 'whole milk' is still overly present in the rules, even with the restriction on lift.
 
+```{r echo = F}
+plot(subset(rules, subset=lift > 1 & confidence > 0.2), measure = c("support", "confidence"), shading = "lift")
+```
+
+The threshold with be raised, as will it for confidence, to prune the rules.
+
+```{r echo = F}
+better_rules = subset(rules, subset=lift > 2.5 & confidence > .03 & support > 1.5/150)
+
+plot(better_rules, measure = c("support", "confidence"), shading = "lift")
+```
+
+Now there are about 30. As displayed above, the most significant rules have been picked. These include many larger frequent itemsets with a few small frequent itemsets.
 
 ```{r}
-# plot all the rules in (support, confidence) space
-# notice that high lift rules tend to have low support
-plot(rules)
-
+kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
 ```
+
