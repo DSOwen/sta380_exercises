@@ -56,19 +56,19 @@ First, let's examine every rule generated with at least 100 instances of the ass
 rules = apriori(groceries, 
 	parameter=list(support=100/15000, confidence=.1, minlen = 2)
 	)
-sub_rules = arules::inspect(subset(rules, subset=lift > 1 & confidence > 0.2))
+sub_rules = subset(rules, subset=lift > 1 & confidence > 0.2)
 ```
 
 ```{r}
 # fix this
-sub_rules
-#kable(head(sub_rules,15), format = "markdown", row.names = FALSE)
+#kable(head(arules::inspect(sub_rules),15), format = "markdown", row.names = FALSE)
+#arules::inspect(sub_rules)
 ```
 
-Under these conditions, 500 rules are produced. Even a small preview shows that 'whole milk' is still overly present in the rules, even with the restriction on lift.
+Under these conditions, 500 rules are produced. The frequent single items above are still overly present in the rules, even with the restriction on lift.
 
 ```{r echo = F}
-plot(subset(rules, subset=lift > 1 & confidence > 0.2), measure = c("support", "confidence"), shading = "lift")
+plot(subset(rules, subset=lift > 1 & confidence > 0.2), measure = c("support", "confidence"), shading = "lift", jitter = 0)
 ```
 
 The threshold with be raised, as will it for confidence, to prune the rules.
@@ -81,7 +81,10 @@ plot(better_rules, measure = c("support", "confidence"), shading = "lift")
 
 Now there are about 30. As displayed above, the most significant rules have been picked. These include many larger frequent itemsets with a few small frequent itemsets.
 
-```{r}
-kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
+```{r echo = F}
+#kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
+arules::inspect(better_rules)
 ```
+
+## Analysis
 

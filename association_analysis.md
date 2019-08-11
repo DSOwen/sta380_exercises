@@ -51,18 +51,13 @@ pattern.
 
 ``` r
 # fix this
-sub_rules
+#kable(head(arules::inspect(sub_rules),15), format = "markdown", row.names = FALSE)
+#arules::inspect(sub_rules)
 ```
 
-    ## NULL
-
-``` r
-#kable(head(sub_rules,15), format = "markdown", row.names = FALSE)
-```
-
-Under these conditions, 500 rules are produced. Even a small preview
-shows that ‘whole milk’ is still overly present in the rules, even with
-the restriction on
+Under these conditions, 500 rules are produced. The frequent single
+items above are still overly present in the rules, even with the
+restriction on
     lift.
 
     ## To reduce overplotting, jitter is added! Use jitter = 0 to prevent jitter.
@@ -80,7 +75,8 @@ small frequent
 itemsets.
 
 ``` r
-kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
+#kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
+arules::inspect(better_rules)
 ```
 
     ##      lhs                     rhs                     support confidence     lift count
@@ -139,7 +135,4 @@ kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
     ## [31] {other vegetables,                                                               
     ##       whole milk}         => {root vegetables}    0.02318251  0.3097826 2.842082   228
 
-    ## Warning in kable_markdown(x = structure(character(0), .Dim = c(0L,
-    ## 0L), .Dimnames = list(: The table should have a header (column names)
-
-|| || || ||
+## Analysis
