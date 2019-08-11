@@ -71,10 +71,10 @@ Under these conditions, 500 rules are produced. The frequent single items above 
 plot(subset(rules, subset=lift > 1 & confidence > 0.2), measure = c("support", "confidence"), shading = "lift", jitter = 0)
 ```
 
-The threshold with be raised, as will it for confidence, to prune the rules.
+The threshold will be raised to prune the rules.
 
 ```{r echo = F}
-better_rules = subset(rules, subset=lift > 2.5 & confidence > .03 & support > 1.5/150)
+better_rules = subset(rules, subset=lift > 3 & confidence > 0.2)
 
 plot(better_rules, measure = c("support", "confidence"), shading = "lift")
 ```
@@ -88,3 +88,6 @@ arules::inspect(better_rules)
 
 ## Analysis
 
+Under the above conditions, an even balance of complex and simple rules are produced. The common items still apear in many of the rules, but with the restrictions on lift, we can confidently say that the rules indicate a significant tendency for them to appear in those itemsets. Some of the rules also exist in both directions with high confidence, showing that the correlation is mutual.
+
+Objectively, we can say that these rules are superior by the high threshold for lift. Subjectively, many of them are sensible, like the correlations between herbs, fruits, and vegetables or butter and milk.
