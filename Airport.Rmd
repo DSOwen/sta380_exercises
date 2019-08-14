@@ -81,7 +81,27 @@ ggplot() + usmap +
 ```
 
 ```{r}
-most_common = flip_origin_dest %>% group_by(Dest) %>% count() # all of the common places to fly to/from
-most_common
+most_common = flip_origin_dest %>% count(Dest) # all of the common places to fly to/from
+most_common = most_common[order(-most_common$n),]
+
+austin_counts = merge(austin_unique, most_common, by = c("Dest","Dest"))
+colnames(austin_counts)[colnames(austin_counts)=="n"] = "counts"
+austin_counts
+```
+
+```{r}
+usmap <- borders("usa") 
+ggplot() + usmap + 
+ geom_curve(data = austin_counts, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = counts)) +
+ #scale_color_brewer(palette = "YlOrRd")+
+ #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
+ theme(panel.background = element_rect(fill = "white"), 
+ axis.line = element_blank(),
+ axis.text.x = element_blank(),
+ axis.text.y = element_blank(),
+ axis.ticks = element_blank(),
+ axis.title.x = element_blank(),
+ axis.title.y = element_blank()
+ )
 ```
 
