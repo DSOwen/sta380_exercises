@@ -83,18 +83,41 @@ ggplot(data = group, aes(x = DayOfWeek, y = count)) +
         geom_bar(stat = 'identity') + 
         facet_wrap(~UniqueCarrier)
 ```
+I want to try the colour for different types of cancellation codes here(A,B and C) but adding that to the aes changes my graph and makes it weird.
 ```{r}
 austin_airport['dep_time'] = as.integer(austin_airport$CRSDepTime / 100)
-austin_airport['dep_time_period'] = ifelse(austin_airport$dep_time >=0 & austin_airport$dep_time < 12, 'Morning', ifelse(austin_airport$dep_time >= 12 & austin_airport$dep_time < 16, 'Afternoon', ifelse(austin_airport$dep_time >=14 && austin_airport$dep_time < 20, 'Evening', 'Night')))                  
-table(austin_airport$dep_time_period)
+austin_airport['dep_time_period'] = ifelse(austin_airport$dep_time >=0 & austin_airport$dep_time < 12, 'Morning', ifelse(austin_airport$dep_time >= 12 & austin_airport$dep_time < 16, 'Afternoon', ifelse(austin_airport$dep_time >=14 & austin_airport$dep_time < 20, 'Evening', 'Night')))                  
 austin_airport$dep_time = as.factor(austin_airport$dep_time)
 austin_airport$dep_time_period = as.factor(austin_airport$dep_time_period)
 group = austin_airport %>%
   group_by(dep_time_period, UniqueCarrier)  %>% 
+  summarize(count = sum(Cancelled == 1) / sum(UniqueCarrier == UniqueCarrier))
+ggplot(data = group, aes(x = dep_time_period, y = count)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier) + 
+        coord_flip()  +
+        labs(title = "Normalised Count of Cancelled Flights by Time of Day for each Airline Carrier") + xlab("Time of Day") + ylab("Normalised Count of Cancelled Flights")
+```
+```{r}
+group = austin_airport %>%
+group_by(dep_time_period, UniqueCarrier)  %>% 
+  summarize(avg = mean(DepDelay) / sum(UniqueCarrier == UniqueCarrier))
+ggplot(data = group, aes(x = dep_time_period, y = avg)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier) + 
+        coord_flip()  +
+        labs(title = "Normalised Mean of Delayed Flights by Time of Day for each Airline Carrier") + xlab("Time of Day") + ylab("Normalised Mean of Delayed Flights")
+```
+Trying to find cancelled flights by the different types of cancellation. Don't know how to remove the blank value.
+```{r}
+group = austin_airport %>%
+  group_by(dep_time_period, CancellationCode)  %>% 
   summarize(count = sum(Cancelled == 1))
 ggplot(data = group, aes(x = dep_time_period, y = count)) +
         geom_bar(stat = 'identity') + 
-        facet_wrap(~UniqueCarrier)
+        facet_wrap(~CancellationCode) + 
+        coord_flip()  +
+        labs(title = "Count of Cancelled Flights by Time of Day for each Type of Cancellations") + xlab("Time of Day") + ylab("Count of Cancelled Flights")
 ```
 
 ```{r}
