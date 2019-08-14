@@ -62,9 +62,13 @@ ggplot() + usmap +
 ```
 
 ```{r}
+flip_origin_dest = transform(austin_airport, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin)) # simply changes all the origins to be austin; doesn't change the rest of the dataset
+austin_unique = distinct(flip_origin_dest,Origin,Dest,.keep_all = T) # drops duplicates
+
 usmap <- borders("usa") 
 ggplot() + usmap + 
- geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y)) + 
+ geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = DepDelay)) +
+ #scale_color_brewer(palette = "YlOrRd")+
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
  theme(panel.background = element_rect(fill = "white"), 
  axis.line = element_blank(),
@@ -77,6 +81,7 @@ ggplot() + usmap +
 ```
 
 ```{r}
-austin_unique = transform(austin_unique, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin))
-austin_unique = distinct(austin_unique,Origin,Dest,.keep_all = T)
+most_common = flip_origin_dest %>% group_by(Dest) %>% count() # all of the common places to fly to/from
+most_common
 ```
+
