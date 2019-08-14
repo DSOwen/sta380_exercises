@@ -7,7 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
 
+```{r}
 library(tidyverse)
 library(ggplot2)
 library(ggrepel)
@@ -29,6 +31,9 @@ austin_airport = austin_airport[!(is.na(austin_airport$Origin) | austin_airport$
 austin_airport = austin_airport[!(is.na(austin_airport$Dest) | austin_airport$Dest == ""), ]
 austin_airport$Origin = as.character(austin_airport$Origin)
 austin_airport$Dest = as.character(austin_airport$Dest)
+austin_airport$Month = as.factor(austin_airport$Month)
+austin_airport$Cancelled = as.factor(austin_airport$Cancelled)
+austin_airport$DayOfWeek = as.factor(austin_airport$DayOfWeek)
 ```
 
 ```{r}
@@ -47,9 +52,15 @@ top_10 = head(arrange(route_counts, desc(count)), 10)
 ```
 
 ```{r}
+austin_unique = transform(austin_unique, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin))
+
+austin_unique = distinct(austin_unique,Origin,Dest,.keep_all = T)
+```
+
+```{r}
 usmap <- borders("usa") 
 ggplot() + usmap + 
- geom_curve(data = top_10, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y)) + 
+ geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y)) + 
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
  theme(panel.background = element_rect(fill = "white"), 
  axis.line = element_blank(),
@@ -61,47 +72,114 @@ ggplot() + usmap +
  )
 ```
 
+Trying to plot the number of cancelled flights by Day of the Week(could also be done by Month) and Flight Carrier. Data is imbalanced so i dont know if it can be used or not. I have done it by time of day after this.
 ```{r}
+cancelled_flights = austin_airport[austin_airport$Cancelled == 1,]
+table(cancelled_flights$UniqueCarrier)
+group = austin_airport %>%
+  group_by(DayOfWeek, UniqueCarrier)  %>% 
+  summarize(count = sum(Cancelled == 1))
+ggplot(data = group, aes(x = DayOfWeek, y = count)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier)
+```
+```{r}
+austin_airport['dep_time'] = as.integer(austin_airport$CRSDepTime / 100)
+austin_airport['dep_time_period'] = ifelse(austin_airport$dep_time >=0 & austin_airport$dep_time < 12, 'Morning', ifelse(austin_airport$dep_time >= 12 & austin_airport$dep_time < 16, 'Afternoon', ifelse(austin_airport$dep_time >=14 && austin_airport$dep_time < 20, 'Evening', 'Night')))                  
+table(austin_airport$dep_time_period)
+austin_airport$dep_time = as.factor(austin_airport$dep_time)
+austin_airport$dep_time_period = as.factor(austin_airport$dep_time_period)
+group = austin_airport %>%
+  group_by(dep_time_period, UniqueCarrier)  %>% 
+  summarize(count = sum(Cancelled == 1))
+ggplot(data = group, aes(x = dep_time_period, y = count)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier)
+```
+
+```{r}
+
 flip_origin_dest = transform(austin_airport, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin)) # simply changes all the origins to be austin; doesn't change the rest of the dataset
+
 austin_unique = distinct(flip_origin_dest,Origin,Dest,.keep_all = T) # drops duplicates
 
+
+
 usmap <- borders("usa") 
+
 ggplot() + usmap + 
+
  geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = DepDelay)) +
+
  #scale_color_brewer(palette = "YlOrRd")+
+
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
+
  theme(panel.background = element_rect(fill = "white"), 
+
  axis.line = element_blank(),
+
  axis.text.x = element_blank(),
+
  axis.text.y = element_blank(),
+
  axis.ticks = element_blank(),
+
  axis.title.x = element_blank(),
+
  axis.title.y = element_blank()
+
  )
+
 ```
 
+
+
 ```{r}
+
 most_common = flip_origin_dest %>% count(Dest) # all of the common places to fly to/from
+
 most_common = most_common[order(-most_common$n),]
 
+
+
 austin_counts = merge(austin_unique, most_common, by = c("Dest","Dest"))
+
 colnames(austin_counts)[colnames(austin_counts)=="n"] = "counts"
+
 austin_counts
+
 ```
 
+
+
 ```{r}
+
 usmap <- borders("usa") 
+
 ggplot() + usmap + 
+
  geom_curve(data = austin_counts, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = counts)) +
+
  #scale_color_brewer(palette = "YlOrRd")+
+
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
+
  theme(panel.background = element_rect(fill = "white"), 
+
  axis.line = element_blank(),
+
  axis.text.x = element_blank(),
+
  axis.text.y = element_blank(),
+
  axis.ticks = element_blank(),
+
  axis.title.x = element_blank(),
+
  axis.title.y = element_blank()
+
  )
+
 ```
 
