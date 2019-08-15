@@ -79,9 +79,10 @@ table(cancelled_flights$UniqueCarrier)
 group = austin_airport %>%
   group_by(DayOfWeek, UniqueCarrier)  %>% 
   summarize(count = sum(Cancelled == 1))
-ggplot(data = group, aes(x = DayOfWeek, y = count)) +
+ggplot(data = group, aes(x = DayOfWeek, y = count, fill = DayOfWeek)) +
         geom_bar(stat = 'identity') + 
-        facet_wrap(~UniqueCarrier)
+        facet_wrap(~UniqueCarrier) +
+        scale_fill_brewer(palette = "Dark2")
 ```
 I want to try the colour for different types of cancellation codes here(A,B and C) but adding that to the aes changes my graph and makes it weird.
 ```{r}
@@ -92,9 +93,10 @@ austin_airport$dep_time_period = as.factor(austin_airport$dep_time_period)
 group = austin_airport %>%
   group_by(dep_time_period, UniqueCarrier)  %>% 
   summarize(count = sum(Cancelled == 1) / sum(UniqueCarrier == UniqueCarrier))
-ggplot(data = group, aes(x = dep_time_period, y = count)) +
+ggplot(data = group, aes(x = dep_time_period, y = count, fill = dep_time_period)) +
         geom_bar(stat = 'identity') + 
         facet_wrap(~UniqueCarrier) + 
+        scale_fill_brewer(palette = "RdYlBu")+
         coord_flip()  +
         labs(title = "A Day's Airline Flight Cancellations") + xlab("Time of Day") + ylab("Percentage of Flights Cancelled")
 ```
@@ -102,8 +104,9 @@ ggplot(data = group, aes(x = dep_time_period, y = count)) +
 group = austin_airport %>%
 group_by(dep_time_period, UniqueCarrier)  %>% 
   summarize(avg = mean(DepDelay) / sum(UniqueCarrier == UniqueCarrier))
-ggplot(data = group, aes(x = dep_time_period, y = avg)) +
+ggplot(data = group, aes(x = dep_time_period, y = avg, fill = dep_time_period)) +
         geom_bar(stat = 'identity') + 
+        scale_fill_brewer(palette = "RdYlBu") +
         facet_wrap(~UniqueCarrier) + 
         coord_flip()  +
         labs(title = "A Day's Airline Flight Delays") + xlab("Time of Day") + ylab("Percentage of Flights Delayed")
@@ -113,8 +116,9 @@ Trying to find cancelled flights by the different types of cancellation. Don't k
 group = austin_airport %>%
   group_by(dep_time_period, CancellationCode)  %>% 
   summarize(count = sum(Cancelled == 1))
-ggplot(data = group, aes(x = dep_time_period, y = count)) +
-        geom_bar(stat = 'identity') + 
+ggplot(data = group, aes(x = dep_time_period, y = count, fill = dep_time_period)) +
+        geom_bar(stat = 'identity') +
+        scale_fill_brewer(palette = "RdYlBu")+
         facet_wrap(~CancellationCode) + 
         coord_flip()  +
         labs(title = "Cancellation Codes During the Day") + xlab("Time of Day") + ylab("Number of Cancelled Flights")
@@ -134,7 +138,7 @@ ggplot() + usmap +
 
  geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = DepDelay)) +
 
- #scale_color_brewer(palette = "YlOrRd")+
+ scale_color_gradient(low = "blue", high = "red")+
 
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
 
@@ -184,7 +188,7 @@ ggplot() + usmap +
 
  geom_curve(data = austin_counts, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y, colour = counts)) +
 
- #scale_color_brewer(palette = "YlOrRd")+
+ scale_color_gradient(low = "lightblue",high = "darkblue")+
 
  #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
 
