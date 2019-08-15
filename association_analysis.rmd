@@ -64,7 +64,7 @@ sub_rules = subset(rules, subset=lift > 1 & confidence > 0.2)
 #kable(head(arules::inspect(sub_rules),15), format = "markdown", row.names = FALSE)
 sub_rules = arules::inspect(sub_rules)
 ```
-![](sub_rules.png)
+![](association_analysis_files/sub_rules.png)
 
 Under these conditions, 500 rules are produced. The frequent single items above are still overly present in the rules, even with the restriction on lift.
 
@@ -87,7 +87,7 @@ Now there are about 30. As displayed above, the most significant rules have been
 better_rules = arules::inspect(better_rules)
 ```
 
-![](better_rules.png)
+![](association_analysis_files/better_rules.png)
 
 ## Analysis
 
@@ -95,7 +95,7 @@ Under the above conditions, an even balance of complex and simple rules are prod
 
 Objectively, we can say that these rules are superior by the high threshold for lift. Subjectively, many of them are sensible, like the correlations between herbs, fruits, and vegetables or butter and milk.
 
-![](rules.png)
+![](association_analysis_files/rules.png)
 
 ```{r echo = F}
 #plot(better_rules, method='graph')

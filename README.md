@@ -114,7 +114,7 @@ are much more frequent than the others, we will also set an initial lift
 threshold of 1, so we know there's at least some significance to the
 pattern.
 
-![](sub_rules.png)
+![](association_analysis_files/sub_rules.png)
 
 Under these conditions, 500 rules are produced. The frequent single
 items above are still overly present in the rules, even with the
@@ -130,7 +130,7 @@ Now there are about 30. As displayed above, the most significant rules
 have been picked. These include many larger frequent itemsets with a few
 small frequent itemsets.
 
-![](better_rules.png)
+![](association_analysis_files/better_rules.png)
 
 ## Analysis
 
@@ -145,4 +145,4 @@ Objectively, we can say that these rules are superior by the high
 threshold for lift. Subjectively, many of them are sensible, like the
 correlations between herbs, fruits, and vegetables or butter and milk.
 
-![](rules.png)
+![](association_analysis_files/rules.png)
