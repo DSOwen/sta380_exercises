@@ -96,7 +96,7 @@ ggplot(data = group, aes(x = dep_time_period, y = count)) +
         geom_bar(stat = 'identity') + 
         facet_wrap(~UniqueCarrier) + 
         coord_flip()  +
-        labs(title = "Normalised Count of Cancelled Flights by Time of Day for each Airline Carrier") + xlab("Time of Day") + ylab("Normalised Count of Cancelled Flights")
+        labs(title = "A Day's Airline Flight Cancellations") + xlab("Time of Day") + ylab("Percentage of Flights Cancelled")
 ```
 ```{r}
 group = austin_airport %>%
@@ -106,7 +106,7 @@ ggplot(data = group, aes(x = dep_time_period, y = avg)) +
         geom_bar(stat = 'identity') + 
         facet_wrap(~UniqueCarrier) + 
         coord_flip()  +
-        labs(title = "Normalised Mean of Delayed Flights by Time of Day for each Airline Carrier") + xlab("Time of Day") + ylab("Normalised Mean of Delayed Flights")
+        labs(title = "A Day's Airline Flight Delays") + xlab("Time of Day") + ylab("Percentage of Flights Delayed")
 ```
 Trying to find cancelled flights by the different types of cancellation. Don't know how to remove the blank value.
 ```{r}
@@ -117,7 +117,7 @@ ggplot(data = group, aes(x = dep_time_period, y = count)) +
         geom_bar(stat = 'identity') + 
         facet_wrap(~CancellationCode) + 
         coord_flip()  +
-        labs(title = "Count of Cancelled Flights by Time of Day for each Type of Cancellations") + xlab("Time of Day") + ylab("Count of Cancelled Flights")
+        labs(title = "Cancellation Codes During the Day") + xlab("Time of Day") + ylab("Number of Cancelled Flights")
 ```
 
 ```{r}
