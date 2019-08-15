@@ -2,25 +2,21 @@
 title: "Visualisation"
 author: "Pooja Shah"
 date: "12/08/2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-```{r}
 library(tidyverse)
 library(ggplot2)
 library(ggrepel)
 ```
 
-```{r}
+```{r include = F}
 austin_airport = read.csv("ABIA.csv")
 airport_codes = read.csv("airport-codes.csv")
-```
 
-```{r}
 us_airport_codes = subset(airport_codes, airport_codes$iso_country == 'US', select = c(iata_code, coordinates))
 us_airport_codes = separate(us_airport_codes, coordinates, c("longitude", "latitude"), sep = ", ")
 us_airport_codes$longitude = as.numeric(us_airport_codes$longitude)
@@ -36,102 +32,48 @@ austin_airport$Cancelled = as.factor(austin_airport$Cancelled)
 austin_airport$DayOfWeek = as.factor(austin_airport$DayOfWeek)
 ```
 
-```{r}
+```{r include = F}
 austin_airport <- merge(austin_airport, us_airport_codes, by.x="Dest", by.y="iata_code")
 austin_airport <- merge(austin_airport, us_airport_codes, by.x="Origin", by.y="iata_code")
 ```
 
-```{r}
+```{r include = F}
 austin_airport['route'] = paste(austin_airport$Origin, " ", austin_airport$Dest)
 austin_unique = distinct(austin_airport, route, .keep_all = TRUE)
 ```
 
-```{r}
+```{r include = F}
 route_counts = distinct(austin_airport %>% group_by(route, latitude.x, latitude.y, longitude.x, longitude.y) %>% summarise(count = n())) 
 top_10 = head(arrange(route_counts, desc(count)), 10)
 ```
 
-```{r}
+```{r include = F}
 austin_unique = transform(austin_unique, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin))
 
 austin_unique = distinct(austin_unique,Origin,Dest,.keep_all = T)
 ```
 
-```{r}
-usmap <- borders("usa") 
-ggplot() + usmap + 
- geom_curve(data = austin_unique, aes(x = latitude.x, y = longitude.x, xend = latitude.y, yend = longitude.y)) + 
- #geom_point(data = us_airport_codes, aes(x = longitude, y = latitude), ) + 
- theme(panel.background = element_rect(fill = "white"), 
- axis.line = element_blank(),
- axis.text.x = element_blank(),
- axis.text.y = element_blank(),
- axis.ticks = element_blank(),
- axis.title.x = element_blank(),
- axis.title.y = element_blank()
- )
-```
-
-Trying to plot the number of cancelled flights by Day of the Week(could also be done by Month) and Flight Carrier. Data is imbalanced so i dont know if it can be used or not. I have done it by time of day after this.
-```{r}
-cancelled_flights = austin_airport[austin_airport$Cancelled == 1,]
-table(cancelled_flights$UniqueCarrier)
-group = austin_airport %>%
-  group_by(DayOfWeek, UniqueCarrier)  %>% 
-  summarize(count = sum(Cancelled == 1))
-ggplot(data = group, aes(x = DayOfWeek, y = count, fill = DayOfWeek)) +
-        geom_bar(stat = 'identity') + 
-        facet_wrap(~UniqueCarrier) +
-        scale_fill_brewer(palette = "Dark2")
-```
-I want to try the colour for different types of cancellation codes here(A,B and C) but adding that to the aes changes my graph and makes it weird.
-```{r}
-austin_airport['dep_time'] = as.integer(austin_airport$CRSDepTime / 100)
-austin_airport['dep_time_period'] = ifelse(austin_airport$dep_time >=0 & austin_airport$dep_time < 12, 'Morning', ifelse(austin_airport$dep_time >= 12 & austin_airport$dep_time < 16, 'Afternoon', ifelse(austin_airport$dep_time >=14 & austin_airport$dep_time < 20, 'Evening', 'Night')))                  
-austin_airport$dep_time = as.factor(austin_airport$dep_time)
-austin_airport$dep_time_period = as.factor(austin_airport$dep_time_period)
-group = austin_airport %>%
-  group_by(dep_time_period, UniqueCarrier)  %>% 
-  summarize(count = sum(Cancelled == 1) / sum(UniqueCarrier == UniqueCarrier))
-ggplot(data = group, aes(x = dep_time_period, y = count, fill = dep_time_period)) +
-        geom_bar(stat = 'identity') + 
-        facet_wrap(~UniqueCarrier) + 
-        scale_fill_brewer(palette = "RdYlBu")+
-        coord_flip()  +
-        labs(title = "A Day's Airline Flight Cancellations") + xlab("Time of Day") + ylab("Percentage of Flights Cancelled")
-```
-```{r}
-group = austin_airport %>%
-group_by(dep_time_period, UniqueCarrier)  %>% 
-  summarize(avg = mean(DepDelay) / sum(UniqueCarrier == UniqueCarrier))
-ggplot(data = group, aes(x = dep_time_period, y = avg, fill = dep_time_period)) +
-        geom_bar(stat = 'identity') + 
-        scale_fill_brewer(palette = "RdYlBu") +
-        facet_wrap(~UniqueCarrier) + 
-        coord_flip()  +
-        labs(title = "A Day's Airline Flight Delays") + xlab("Time of Day") + ylab("Percentage of Flights Delayed")
-```
-Trying to find cancelled flights by the different types of cancellation. Don't know how to remove the blank value.
-```{r}
-group = austin_airport %>%
-  group_by(dep_time_period, CancellationCode)  %>% 
-  summarize(count = sum(Cancelled == 1))
-ggplot(data = group, aes(x = dep_time_period, y = count, fill = dep_time_period)) +
-        geom_bar(stat = 'identity') +
-        scale_fill_brewer(palette = "RdYlBu")+
-        facet_wrap(~CancellationCode) + 
-        coord_flip()  +
-        labs(title = "Cancellation Codes During the Day") + xlab("Time of Day") + ylab("Number of Cancelled Flights")
-```
-
-```{r}
-
+```{r include = F}
 flip_origin_dest = transform(austin_airport, Origin = ifelse(Dest != 'AUS', Origin, Dest), Dest = ifelse(Dest != 'AUS', Dest,Origin)) # simply changes all the origins to be austin; doesn't change the rest of the dataset
 
 austin_unique = distinct(flip_origin_dest,Origin,Dest,.keep_all = T) # drops duplicates
+```
 
+```{r include = F}
+most_common = flip_origin_dest %>% count(Dest) # all of the common places to fly to/from
+most_common = most_common[order(-most_common$n),]
 
+austin_counts = merge(austin_unique, most_common, by = c("Dest","Dest"))
+colnames(austin_counts)[colnames(austin_counts)=="n"] = "counts"
+```
 
+## Maps
+
+For anyone unfortunate enough to be taking a flight, one of the biggest concerns on their mind might be, "Will my plane be delayed?" Such a possibility is frustratingly common and worse, unpredictable 
+
+On the _slightly_ brighter side, we can at least tell which flights have historically been delayed more often than most, be it due to weather, traffic, or any other obstruction.
+
+```{r echo = F}
 usmap <- borders("usa") 
 
 ggplot() + usmap + 
@@ -156,32 +98,14 @@ ggplot() + usmap +
 
  axis.title.y = element_blank()
 
- )
+ ) +
+ labs(title = "ABIA Arrival/Departure Delays")
 
 ```
 
+Here is a map of flights to and from Austin-Bergstrom International Airport. Several high-risk flights stand out in red.
 
-
-```{r}
-
-most_common = flip_origin_dest %>% count(Dest) # all of the common places to fly to/from
-
-most_common = most_common[order(-most_common$n),]
-
-
-
-austin_counts = merge(austin_unique, most_common, by = c("Dest","Dest"))
-
-colnames(austin_counts)[colnames(austin_counts)=="n"] = "counts"
-
-austin_counts
-
-```
-
-
-
-```{r}
-
+```{r echo = F}
 usmap <- borders("usa") 
 
 ggplot() + usmap + 
@@ -206,7 +130,75 @@ ggplot() + usmap +
 
  axis.title.y = element_blank()
 
- )
+ )+
+ labs(title = "ABIA Flight Frequencies")
 
 ```
 
+Compare that to how common flights to each destination are, and you can see that the most-delayed flights are not the most common to occur.
+
+## Cancellations
+
+Worse than a flight being delayed is a complete cancellation. See the plots below for the times were flights have historically been cancelled most often, grouped by each airline.
+
+```{r echo = F}
+cancelled_flights = austin_airport[austin_airport$Cancelled == 1,]
+table(cancelled_flights$UniqueCarrier)
+group = austin_airport %>%
+  group_by(DayOfWeek, UniqueCarrier)  %>% 
+  summarize(count = sum(Cancelled == 1))
+ggplot(data = group, aes(x = DayOfWeek, y = count, fill = DayOfWeek)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier) +
+        scale_fill_brewer(palette = "Dark2") +
+        labs(title = "A Week of Airline Flight Cancellations") + xlab("Day of the Week") + ylab("Number of Flights Cancelled") +
+        theme(legend.position = "none")
+```
+
+Now let's examine them by time of day:
+
+```{r echo = F}
+austin_airport['dep_time'] = as.integer(austin_airport$CRSDepTime / 100)
+austin_airport['dep_time_period'] = ifelse(austin_airport$dep_time >=0 & austin_airport$dep_time < 12, 'Morning', ifelse(austin_airport$dep_time >= 12 & austin_airport$dep_time < 16, 'Afternoon', ifelse(austin_airport$dep_time >=14 & austin_airport$dep_time < 20, 'Evening', 'Night')))                  
+austin_airport$dep_time = as.factor(austin_airport$dep_time)
+austin_airport$dep_time_period = as.factor(austin_airport$dep_time_period)
+group = austin_airport %>%
+  group_by(dep_time_period, UniqueCarrier)  %>% 
+  summarize(count = sum(Cancelled == 1) / sum(UniqueCarrier == UniqueCarrier))
+ggplot(data = group, aes(x = dep_time_period, y = count, fill = dep_time_period)) +
+        geom_bar(stat = 'identity') + 
+        facet_wrap(~UniqueCarrier) + 
+        scale_fill_brewer(palette = "RdYlBu")+
+        coord_flip()  +
+        labs(title = "A Day's Airline Flight Cancellations") + xlab("Time of Day") + ylab("Percentage of Flights Cancelled") +
+        theme(legend.position = "none")
+```
+
+Northwest Airlines had no cancellations!
+
+```{r include = F}
+group = austin_airport %>%
+group_by(dep_time_period, UniqueCarrier)  %>% 
+  summarize(avg = mean(DepDelay) / sum(UniqueCarrier == UniqueCarrier))
+ggplot(data = group, aes(x = dep_time_period, y = avg, fill = dep_time_period)) +
+        geom_bar(stat = 'identity') + 
+        scale_fill_brewer(palette = "RdYlBu") +
+        facet_wrap(~UniqueCarrier) + 
+        coord_flip()  +
+        labs(title = "A Day's Airline Flight Delays") + xlab("Time of Day") + ylab("Percentage of Flights Delayed")
+```
+
+Below are the types of cancellations that happen during the day.
+
+```{r echo = F}
+group = austin_airport %>%
+  group_by(dep_time_period, CancellationCode)  %>% 
+  summarize(count = sum(Cancelled == 1))
+ggplot(data = group[-c(1,5,9,13),], aes(x = dep_time_period, y = count, fill = dep_time_period)) +
+        geom_bar(stat = 'identity') +
+        scale_fill_brewer(palette = "RdYlBu")+
+        facet_wrap(~CancellationCode) + 
+        #coord_flip()  +
+        labs(title = "Cancellation Codes During the Day") + xlab("Time of Day") + ylab("Number of Cancelled Flights") +
+        theme(legend.position = "none")
+```
