@@ -49,11 +49,7 @@ are much more frequent than the others, we will also set an initial lift
 threshold of 1, so we know there’s at least some significance to the
 pattern.
 
-``` r
-# fix this
-#kable(head(arules::inspect(sub_rules),15), format = "markdown", row.names = FALSE)
-#arules::inspect(sub_rules)
-```
+![](sub_rules.png)
 
 Under these conditions, 500 rules are produced. The frequent single
 items above are still overly present in the rules, even with the
@@ -67,59 +63,9 @@ The threshold will be raised to prune the rules.
 
 Now there are about 30. As displayed above, the most significant rules
 have been picked. These include many larger frequent itemsets with a few
-small frequent
-    itemsets.
+small frequent itemsets.
 
-    ##      lhs                     rhs                      support confidence     lift count
-    ## [1]  {herbs}              => {root vegetables}    0.007015760  0.4312500 3.956477    69
-    ## [2]  {sliced cheese}      => {sausage}            0.007015760  0.2863071 3.047435    69
-    ## [3]  {berries}            => {whipped/sour cream} 0.009049314  0.2721713 3.796886    89
-    ## [4]  {beef}               => {root vegetables}    0.017386884  0.3313953 3.040367   171
-    ## [5]  {beef,                                                                            
-    ##       other vegetables}   => {root vegetables}    0.007930859  0.4020619 3.688692    78
-    ## [6]  {beef,                                                                            
-    ##       whole milk}         => {root vegetables}    0.008032537  0.3779904 3.467851    79
-    ## [7]  {butter,                                                                          
-    ##       whole milk}         => {whipped/sour cream} 0.006710727  0.2435424 3.397503    66
-    ## [8]  {whipped/sour cream,                                                              
-    ##       whole milk}         => {butter}             0.006710727  0.2082019 3.757185    66
-    ## [9]  {domestic eggs,                                                                   
-    ##       other vegetables}   => {root vegetables}    0.007320793  0.3287671 3.016254    72
-    ## [10] {other vegetables,                                                                
-    ##       tropical fruit}     => {whipped/sour cream} 0.007829181  0.2181303 3.042995    77
-    ## [11] {other vegetables,                                                                
-    ##       yogurt}             => {whipped/sour cream} 0.010167768  0.2341920 3.267062   100
-    ## [12] {other vegetables,                                                                
-    ##       pip fruit}          => {tropical fruit}     0.009456024  0.3618677 3.448613    93
-    ## [13] {other vegetables,                                                                
-    ##       tropical fruit}     => {pip fruit}          0.009456024  0.2634561 3.482649    93
-    ## [14] {other vegetables,                                                                
-    ##       tropical fruit}     => {citrus fruit}       0.009049314  0.2521246 3.046248    89
-    ## [15] {citrus fruit,                                                                    
-    ##       root vegetables}    => {other vegetables}   0.010371124  0.5862069 3.029608   102
-    ## [16] {citrus fruit,                                                                    
-    ##       other vegetables}   => {root vegetables}    0.010371124  0.3591549 3.295045   102
-    ## [17] {root vegetables,                                                                 
-    ##       yogurt}             => {tropical fruit}     0.008134215  0.3149606 3.001587    80
-    ## [18] {root vegetables,                                                                 
-    ##       tropical fruit}     => {other vegetables}   0.012302999  0.5845411 3.020999   121
-    ## [19] {other vegetables,                                                                
-    ##       tropical fruit}     => {root vegetables}    0.012302999  0.3427762 3.144780   121
-    ## [20] {root vegetables,                                                                 
-    ##       tropical fruit,                                                                  
-    ##       whole milk}         => {other vegetables}   0.007015760  0.5847458 3.022057    69
-    ## [21] {other vegetables,                                                                
-    ##       tropical fruit,                                                                  
-    ##       whole milk}         => {root vegetables}    0.007015760  0.4107143 3.768074    69
-    ## [22] {other vegetables,                                                                
-    ##       tropical fruit,                                                                  
-    ##       whole milk}         => {yogurt}             0.007625826  0.4464286 3.200164    75
-    ## [23] {other vegetables,                                                                
-    ##       whole milk,                                                                      
-    ##       yogurt}             => {tropical fruit}     0.007625826  0.3424658 3.263712    75
-    ## [24] {other vegetables,                                                                
-    ##       whole milk,                                                                      
-    ##       yogurt}             => {root vegetables}    0.007829181  0.3515982 3.225716    77
+![](better_rules.png)
 
 ## Analysis
 
@@ -133,3 +79,5 @@ showing that the correlation is mutual.
 Objectively, we can say that these rules are superior by the high
 threshold for lift. Subjectively, many of them are sensible, like the
 correlations between herbs, fruits, and vegetables or butter and milk.
+
+![](rules.png)

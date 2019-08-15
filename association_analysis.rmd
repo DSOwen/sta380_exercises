@@ -59,11 +59,12 @@ rules = apriori(groceries,
 sub_rules = subset(rules, subset=lift > 1 & confidence > 0.2)
 ```
 
-```{r}
+```{r include = F}
 # fix this
 #kable(head(arules::inspect(sub_rules),15), format = "markdown", row.names = FALSE)
-#arules::inspect(sub_rules)
+sub_rules = arules::inspect(sub_rules)
 ```
+![](sub_rules.png)
 
 Under these conditions, 500 rules are produced. The frequent single items above are still overly present in the rules, even with the restriction on lift.
 
@@ -81,13 +82,21 @@ plot(better_rules, measure = c("support", "confidence"), shading = "lift")
 
 Now there are about 30. As displayed above, the most significant rules have been picked. These include many larger frequent itemsets with a few small frequent itemsets.
 
-```{r echo = F}
+```{r include = F}
 #kable(arules::inspect(better_rules), format = "markdown", row.names = FALSE)
-arules::inspect(better_rules)
+better_rules = arules::inspect(better_rules)
 ```
+
+![](better_rules.png)
 
 ## Analysis
 
 Under the above conditions, an even balance of complex and simple rules are produced. The common items still apear in many of the rules, but with the restrictions on lift, we can confidently say that the rules indicate a significant tendency for them to appear in those itemsets. Some of the rules also exist in both directions with high confidence, showing that the correlation is mutual.
 
 Objectively, we can say that these rules are superior by the high threshold for lift. Subjectively, many of them are sensible, like the correlations between herbs, fruits, and vegetables or butter and milk.
+
+![](rules.png)
+
+```{r echo = F}
+#plot(better_rules, method='graph')
+```
