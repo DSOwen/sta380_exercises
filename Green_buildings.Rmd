@@ -1,0 +1,182 @@
+---
+title: "Green_Buildings"
+output: github_document
+---
+
+
+```{r setup, include=FALSE}
+library(dplyr)
+```
+
+```{r include = FALSE}
+library(mosaic)
+library(tidyverse)
+buildings = read.csv('greenbuildings.csv')
+
+```
+## Initial Data Processing
+```{r}
+#converting categorical variables to factors
+buildings$green_rating = as.factor(buildings$green_rating)
+buildings$LEED = as.factor(buildings$LEED)
+buildings$Energystar = as.factor(buildings$Energystar)
+buildings$amenities = as.factor(buildings$amenities)
+buildings$renovated = as.factor(buildings$renovated)
+buildings$class_a = as.factor(buildings$class_a)
+buildings$class_b = as.factor(buildings$class_b)
+buildings$net = as.factor(buildings$net)
+```
+
+
+```{r}
+#creating a separate class variable
+buildings$class = ifelse(buildings$class_a == 1, 'A', ifelse(buildings$class_b == 1, 'B', 'C'))
+```
+
+## Exploratory Analysis
+
+At first glance, it appears that the on-staff stats guru makes valid points about the situaton. 
+
+As can be seen below, there is indeed a $2.6 difference in green and non-green buildings. We control for occupancy rates >10%.
+```{r}
+buildings %>% filter(leasing_rate>=10)%>% group_by(green_rating) %>% summarise(med_rent = median(Rent), count = n())
+```
+
+```{r}
+ggplot(buildings, aes(green_rating, Rent)) + geom_boxplot()
+```
+
+Non-green buildings also have a lot more outliers, and hence the guru's rationale behind using the median instead of the mean holds true.
+
+### Rent vs. Occupancy Rates
+
+```{r}
+ggplot(buildings, aes(leasing_rate, Rent, color = green_rating)) + geom_point()
+```
+
+Although the minimum rent holds constant for all values of occupancy rates, it shows a subtle increasing trend with increasing occupancy rates. Let us explore if green buildings have higher occupancy rates. 
+
+```{r}
+buildings %>% group_by(green_rating) %>% summarise(med_occupancy = median(leasing_rate), count = n())
+```
+
+Green buildings do have slightly higher occupancy rates than non-green buildings. As mentioned in the case study, this could be thanks to better awareness and PR for non-green buildings, but we don't have enough data to verify this claim.  
+
+The guru's assumption of 90% occupancy rates for the proposed green building is in line with the occupancy rates suggested in our dataset. 
+
+
+### Age vs. Occupancy Rates
+
+Are younger buildings more or less likely to be occupied?
+
+```{r}
+ggplot(buildings, aes(age, leasing_rate, color = green_rating)) + geom_point()
+
+```
+
+There doesn't appear to be any defined relationship between the two. 
+
+## Confounding Factors
+
+Next, we explore the possibilites of any confounding factors that might indirectly raise the rent for green buildings.
+
+### 1. Amenities
+
+Most green buildings (72%) have amenities (only ~52% in case of non-green), so could this be a factor in raising the rents for green buildings?
+
+```{r}
+buildings %>% group_by(green_rating, amenities) %>% summarise(med_rent = median(Rent), count = n())
+
+```
+
+Controlling for amenities, i.e. comparing rents for green & non-green buildings without amenities, there is still a premium for green buildings ($2), and hence this theory does not hold up. 
+
+### 2. Number of stories
+
+```{r}
+ggplot(buildings, aes(stories, Rent, color = green_rating)) + geom_point()
+
+```
+
+The minimum rent shows an increase with increasing number of stories. Our client may thus be able to demand a higher rent with a taller building. 
+
+```{r}
+buildings %>% group_by(green_rating) %>% summarise(med_stories = median(stories))
+```
+
+Green buildings are in general 1 storey higher than non-green building, but this difference is not strong enough to be considered a confounding factor. 
+
+
+### 3. Size
+```{r}
+ggplot(buildings, aes(size, Rent, color = green_rating)) + geom_point()
+```
+
+From the graph above, we can see that the rent increases with increasing available leasing space.
+
+```{r}
+buildings %>% group_by(green_rating)%>%
+summarize(med_size = median(size), mean_size = mean(size))
+```
+
+Green buildings also appear to have more leasing space in general, and thus, size could be a potential counfounding variable. 
+
+### 4. Age
+
+```{r}
+buildings %>% group_by(green_rating) %>% summarise(med_age = median(age), count = n())
+```
+
+Green buildings are younger by around 15 years. Do newer buildings in general demand higher rent?
+
+```{r}
+ggplot(buildings, aes(age, Rent, color = green_rating)) + geom_point()
+
+```
+
+There doesn't appear to be a particular relationship between age and rent, and hence, age doesn't appear to be a confounding factor.  
+
+
+
+```{r}
+buildings$revenue = 1.000*(buildings$size * buildings$Rent * buildings$leasing_rate)/100
+```
+
+```{r }
+summary(buildings$revenue)
+```
+
+## Further Recommendations
+
+Can revenue for green buildings be maximised by choosing the right locations to build them?
+
+```{r}
+ggplot(buildings, aes(cluster, Rent, color = green_rating)) + geom_point()
+```
+
+
+
+```{r}
+buildings %>% filter(cluster>=430 & cluster<=600) %>% group_by(green_rating) %>%summarise(med = median(Rent), count = n())
+```
+
+There is a difference of $5 between green and non-green buildings for clusters 430 - 600, possibly due to increased environmental awareness. We could thus  generate an additional revenue of $5 * 250,000 = $1.25 million per year. 
+
+## Insights
+
+To summarise, we have the following points: 
+
+- There is an additional $2.6 in revenue for green buildings vs. traditional buildings, and this difference jumps up to $5 for clusters 430 - 600. 
+
+- There is a subtle positive relationship bwtween rent and occupancy rates. Green buildings have a slightly better rate of occupancy, possibly due to their average young age and better PR & advertising opportunities.
+
+- There doesn't appear to be any correlation between age and occupancy rates. 
+
+- On further analysis, we find that rent and size share a subtle positive relationship. Green buildings also, on average, are approximately 100,000 sq. ft. larger than non-green buildings, so this could be a confounding factor. But we need further data to corroborate this claim. 
+
+The on-site guru's hypothesis of being able to recuperate costs in around 8-9 years holds true. The average age for green buildings is currently 22 years, but as green buildings become more popular, we expect them to age and thus, the guru's assumption that the building would generate revenue for 30 years is fair. 
+
+
+
+
+
