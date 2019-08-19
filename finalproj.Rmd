@@ -1,11 +1,10 @@
 ---
 output:
-  word_document: default
-  html_document: default
-  pdf_document: default
+  github_document
 ---
 Uploading the libraries
 ```{r}
+knitr::opts_chunk$set(echo = TRUE)
 library(mosaic)
 library(quantmod)
 library(foreach)
@@ -148,7 +147,8 @@ plot(wealthtracker_a, type = 'l')
 plot(wealthtracker_b, type = 'l')
 plot(wealthtracker_c, type = 'l')
 ```
-```{r}
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 initial_wealth = 100000
 sim1 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_a = initial_wealth
@@ -182,6 +182,7 @@ VAR
 ```
 Second Portfolio
 ```{r}
+knitr::opts_chunk$set(echo = TRUE)
 initial_wealth = 100000
 sim2 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_b = initial_wealth
@@ -215,6 +216,7 @@ VAR
 ```
 Portfolio C
 ```{r}
+knitr::opts_chunk$set(echo = TRUE)
 initial_wealth = 100000
 sim3 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_c = initial_wealth
