@@ -10,7 +10,7 @@ library(tidyverse)
 ```
 
 
-```{r}
+```{r echo = F}
 df = read.csv('social_marketing.csv')
 ```
 
@@ -20,7 +20,7 @@ We have a dataset of the number of tweets from customers of an anonymised firm, 
 
 A brief summary of the data:
 
-```{r}
+```{r echo = F}
 xxx = df[,-1]
 #barplot(xxx)
 x_vector<-colSums(xxx)
@@ -32,14 +32,14 @@ barplot(x_vector, las=2)
 
 Are there any categories that are positively correlated with each other?
 
-```{r}
+```{r echo = F}
 ggplot(df, aes(college_uni, online_gaming)) + geom_point()
 ```
 
 
 Online gaming and universties are correlated categories. Let us plot a correlation for all categories. 
 
-```{r}
+```{r echo = F}
 library(corrplot)
 X = df[,-1]
 rownames(df) <- df$User
@@ -70,11 +70,11 @@ library(mosaic)
 
 Including only the measureable categories for clustering: 
 
-```{r}
+```{r echo = F}
 X = scale(X, center=TRUE, scale=TRUE) #standardising the variables
 ```
 
-```{r}
+```{r echo = F}
 mu = attr(X,"scaled:center")
 sigma = attr(X,"scaled:scale") 
 ```
@@ -83,7 +83,7 @@ sigma = attr(X,"scaled:scale")
 
 Choosing the number of clusters is completely subjective based either on business goals or mathematical basis. Let us plot the elbow plot to get a sense of the number of clusters to be used. 
 
-```{r}
+```{r echo = F}
 # Iterating over the number of clusters to optimize k
 num_cent <- c(2:18)
 rmse_all <- NULL
@@ -105,13 +105,13 @@ Let us choose k = 5 as the optimum number of clusters.
 
 K-means clustering will provide us with information on what posts are tweeted togeher, which will help us create buyer personas in order to better tailor advertising campaigns. 
 
-```{r}
+```{r echo = F}
 clust1 = kmeans(X, 5, nstart=25)
 ```
 
 ### CLuster 1
 
-```{r}
+```{r echo = F}
 head(sort((clust1$center[1,]*sigma + mu), decreasing=TRUE))
 
 ```
@@ -119,27 +119,27 @@ head(sort((clust1$center[1,]*sigma + mu), decreasing=TRUE))
 
 ### Cluster 2
 
-```{r}
+```{r echo = F}
 head(sort((clust1$center[2,]*sigma + mu), decreasing=TRUE))
 ```
 
 
 ### Cluster 3
 
-```{r}
+```{r echo = F}
 head(sort((clust1$center[3,]*sigma + mu), decreasing=TRUE))
 ```
 
 ### Cluster 4
 
-```{r}
+```{r echo = F}
 head(sort((clust1$center[4,]*sigma + mu), decreasing=TRUE))
 
 ```
 
 ### Cluster 5
 
-```{r}
+```{r echo = F}
 head(sort((clust1$center[5,]*sigma + mu), decreasing=TRUE))
 
 ```

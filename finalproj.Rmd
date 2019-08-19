@@ -1,18 +1,15 @@
 ---
-output:
-  word_document: default
-  html_document: default
-  pdf_document: default
+output: github_document
 ---
 Uploading the libraries
-```{r}
+```{r echo = F}
 library(mosaic)
 library(quantmod)
 library(foreach)
 ```
 
 Importing the stocks that we want to use
-```{r}
+```{r echo = F}
 port1 <- c("EDEN", "GXC", "CXSE", "QEMM", "IEMG")
 
 port2 <- c("FSZ", "JPMV",  "FCA", "TUR")
@@ -27,7 +24,7 @@ port3.data <- getSymbols(port3, from = "2014-01-01")
 ```
 
 Adjusting for splits and dividends
-```{r}
+```{r echo = F}
 EDENa <- adjustOHLC(EDEN)
 GXCa <- adjustOHLC(GXC)
 CXSEa <- adjustOHLC(CXSE)
@@ -49,7 +46,7 @@ ERUSc <- adjustOHLC(ERUS)
 ```
 
 Combining close to close changes in a single matrix
-```{r}
+```{r echo = F}
 all_returns_a <- cbind(ClCl(EDENa),ClCl(GXCa), ClCl(CXSEa),ClCl(QEMMa),ClCl(IEMGa))
 all_returns_b <- cbind(ClCl(FSZb),ClCl(JPMVb), ClCl(FCAb),ClCl(TURb))
 all_returns_c <- cbind(ClCl(EWJc),ClCl(EWLc), ClCl(EWNc),ClCl(ASHRc),ClCl(KFYPc),ClCl(GREKc),ClCl(ERUSc))
@@ -68,13 +65,13 @@ print("Portfolio c: ")
 head(all_returns_c)
 ```
 Computing the returns from the closing prices
-```{r}
+```{r echo = F}
 pairs(all_returns_a)
 pairs(all_returns_b)
 pairs(all_returns_c)
 ```
 Sampling a random return from the empirical joint distribution 
-```{r}
+```{r echo = F}
 set.seed(45)
 return.today_a <- resample(all_returns_a, 1, orig.ids = FALSE)
 return.today_b <- resample(all_returns_b, 1, orig.ids = FALSE)
@@ -82,7 +79,7 @@ return.today_c <- resample(all_returns_c, 1, orig.ids = FALSE)
 ```
 
 Update the value of my holdings, starting with an equal distribution to each asset
-```{r}
+```{r echo = F}
 set.seed(45)
 total_wealth = 100000
 my_weights_a <- c(0.2, 0.2, 0.2, 0.2, 0.2)
@@ -106,7 +103,7 @@ total_wealth_b
 total_weatlh_c
 ```
 Loop over 4 trading weeks
-```{r}
+```{r echo = F}
 set.seed(45)
 total_wealth = 100000
 my_weights_a <- c(0.2, 0.2, 0.2, 0.2, 0.2)
@@ -148,7 +145,7 @@ plot(wealthtracker_a, type = 'l')
 plot(wealthtracker_b, type = 'l')
 plot(wealthtracker_c, type = 'l')
 ```
-```{r}
+```{r echo = F}
 initial_wealth = 100000
 sim1 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_a = initial_wealth
@@ -181,7 +178,7 @@ VAR = quantile(sim1[,n_days], .05)
 VAR
 ```
 Second Portfolio
-```{r}
+```{r echo = F}
 initial_wealth = 100000
 sim2 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_b = initial_wealth
@@ -214,7 +211,7 @@ VAR = quantile(sim2[,n_days], .05)
 VAR
 ```
 Portfolio C
-```{r}
+```{r echo = F}
 initial_wealth = 100000
 sim3 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_c = initial_wealth

@@ -1,24 +1,12 @@
 Market Segmentation
 ================
 
-``` r
-df = read.csv('social_marketing.csv')
-```
-
 ## Data Description
 
 We have a dataset of the number of tweets from customers of an
 anonymised firm, in terms of categories of the tweets.
 
 A brief summary of the data:
-
-``` r
-xxx = df[,-1]
-#barplot(xxx)
-x_vector<-colSums(xxx)
-x_vector<-sort(x_vector, decreasing = TRUE)
-barplot(x_vector, las=2)
-```
 
 ![](marketing-seg_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
@@ -28,27 +16,14 @@ are also popular categories.
 
 Are there any categories that are positively correlated with each other?
 
-``` r
-ggplot(df, aes(college_uni, online_gaming)) + geom_point()
-```
-
 ![](marketing-seg_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 Online gaming and universties are correlated categories. Let us plot a
 correlation for all categories.
 
-``` r
-library(corrplot)
-```
+    ## Warning: package 'corrplot' was built under R version 3.6.1
 
     ## corrplot 0.84 loaded
-
-``` r
-X = df[,-1]
-rownames(df) <- df$User
-correlation <- cor(X)
-corrplot(correlation, method = "square")
-```
 
 ![](marketing-seg_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
@@ -68,37 +43,11 @@ understand market segments, let us perform k-means clustering.
 
 Including only the measureable categories for clustering:
 
-``` r
-X = scale(X, center=TRUE, scale=TRUE) #standardising the variables
-```
-
-``` r
-mu = attr(X,"scaled:center")
-sigma = attr(X,"scaled:scale") 
-```
-
 ### Choosing the value of K
 
 Choosing the number of clusters is completely subjective based either on
 business goals or mathematical basis. Let us plot the elbow plot to get
 a sense of the number of clusters to be used.
-
-``` r
-# Iterating over the number of clusters to optimize k
-num_cent <- c(2:18)
-rmse_all <- NULL
-
-for(num_center in num_cent){
-  cluster <- kmeans(X, centers = num_center, nstart = 50, iter.max = 20)
-  rmse <- sqrt(mean(cluster$withinss))
-  rmse_all <- c(rmse_all, rmse)
-}
-
-#plotting the RMSE by choosing various K's
-
-plot(num_cent, rmse_all, type = 'b',
-     xlab = "Number of Centers", ylab = "RMSE", main = "RMSE vs Number of Clusters")
-```
 
 ![](marketing-seg_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
@@ -109,64 +58,40 @@ tweeted togeher, which will help us create buyer personas in order to
 better tailor advertising
     campaigns.
 
-``` r
-clust1 = kmeans(X, 5, nstart=25)
-```
-
 ### CLuster 1
 
-``` r
-head(sort((clust1$center[1,]*sigma + mu), decreasing=TRUE))
-```
-
-    ##          chatter    photo_sharing   current_events      college_uni 
-    ##         3.650288         1.839885         1.362176         1.093720 
-    ## health_nutrition           travel 
-    ##         1.085810         1.049616
+    ##       chatter      politics photo_sharing   college_uni        travel 
+    ##      6.533920      4.398869      3.885678      3.432161      3.168970 
+    ##          news 
+    ##      2.568467
 
 ### Cluster 2
 
-``` r
-head(sort((clust1$center[2,]*sigma + mu), decreasing=TRUE))
-```
-
-    ##      politics        travel          news       chatter     computers 
-    ##      9.164179      5.808955      5.264179      4.376119      2.583582 
-    ## photo_sharing 
-    ##      2.398507
+    ##          cooking    photo_sharing          fashion          chatter 
+    ##        11.241007         6.008993         5.719424         4.517986 
+    ##           beauty health_nutrition 
+    ##         3.994604         2.372302
 
 ### Cluster 3
 
-``` r
-head(sort((clust1$center[3,]*sigma + mu), decreasing=TRUE))
-```
-
-    ## sports_fandom      religion          food     parenting       chatter 
-    ##      6.022973      5.414865      4.628378      4.137838      4.095946 
-    ##        school 
-    ##      2.737838
+    ## health_nutrition personal_fitness          chatter          cooking 
+    ##        12.093574         6.506201         4.166855         3.267193 
+    ##         outdoors    photo_sharing 
+    ##         2.768884         2.506201
 
 ### Cluster 4
 
-``` r
-head(sort((clust1$center[4,]*sigma + mu), decreasing=TRUE))
-```
-
-    ##       chatter photo_sharing       cooking   college_uni       fashion 
-    ##      6.936364      5.513986      4.964336      3.244755      2.763636 
-    ##      shopping 
-    ##      2.717483
+    ## sports_fandom      religion          food     parenting       chatter 
+    ##      6.000000      5.401077      4.641992      4.161507      4.083445 
+    ##        school 
+    ##      2.769852
 
 ### Cluster 5
 
-``` r
-head(sort((clust1$center[5,]*sigma + mu), decreasing=TRUE))
-```
-
-    ## health_nutrition personal_fitness          chatter          cooking 
-    ##        12.265517         6.559770         4.091954         3.485057 
-    ##         outdoors    photo_sharing 
-    ##         2.790805         2.555172
+    ##          chatter    photo_sharing   current_events health_nutrition 
+    ##        3.6615497        1.8652534        1.3421053        1.0913743 
+    ##           travel         politics 
+    ##        1.0609162        0.9973197
 
 ## Market Segments
 
