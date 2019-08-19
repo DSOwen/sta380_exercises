@@ -1,0 +1,167 @@
+---
+title: "Market Segmentation"
+output: github_document
+---
+
+```{r include = FALSE}
+library(ggplot2)
+library(tidyverse)
+
+```
+
+
+```{r}
+df = read.csv('social_marketing.csv')
+```
+
+## Data Description
+
+We have a dataset of the number of tweets from customers of an anonymised firm, in terms of categories of the tweets. 
+
+A brief summary of the data:
+
+```{r}
+xxx = df[,-1]
+#barplot(xxx)
+x_vector<-colSums(xxx)
+x_vector<-sort(x_vector, decreasing = TRUE)
+barplot(x_vector, las=2)
+```
+
+'Chatter' category (uncategorised posts) has the most number of posts, which isn't informative. Photo-sharing, nutrition, cooking, and politics are also popular categories. 
+
+Are there any categories that are positively correlated with each other?
+
+```{r}
+ggplot(df, aes(college_uni, online_gaming)) + geom_point()
+```
+
+
+Online gaming and universties are correlated categories. Let us plot a correlation for all categories. 
+
+```{r}
+library(corrplot)
+X = df[,-1]
+rownames(df) <- df$User
+correlation <- cor(X)
+corrplot(correlation, method = "square")
+
+```
+
+The following categories are highly correlated: (represented by dark squares)
+
+1) Personal fitness & nutrition,
+2) fashion and cooking,
+3) politics and travel,
+4) religion and sports fandom
+5) Online gaming and universities
+
+However, these show us correlations in two dimensions. To better understand market segments, let us perform k-means clustering. 
+
+
+```{r include=FALSE}
+library(LICORS)  # for kmeans++
+library(foreach)
+library(mosaic)
+```
+
+
+## K-means Clustering
+
+Including only the measureable categories for clustering: 
+
+```{r}
+X = scale(X, center=TRUE, scale=TRUE) #standardising the variables
+```
+
+```{r}
+mu = attr(X,"scaled:center")
+sigma = attr(X,"scaled:scale") 
+```
+
+### Choosing the value of K
+
+Choosing the number of clusters is completely subjective based either on business goals or mathematical basis. Let us plot the elbow plot to get a sense of the number of clusters to be used. 
+
+```{r}
+# Iterating over the number of clusters to optimize k
+num_cent <- c(2:18)
+rmse_all <- NULL
+
+for(num_center in num_cent){
+  cluster <- kmeans(X, centers = num_center, nstart = 50, iter.max = 20)
+  rmse <- sqrt(mean(cluster$withinss))
+  rmse_all <- c(rmse_all, rmse)
+}
+
+#plotting the RMSE by choosing various K's
+
+plot(num_cent, rmse_all, type = 'b',
+     xlab = "Number of Centers", ylab = "RMSE", main = "RMSE vs Number of Clusters")
+```
+
+
+Let us choose k = 5 as the optimum number of clusters. 
+
+K-means clustering will provide us with information on what posts are tweeted togeher, which will help us create buyer personas in order to better tailor advertising campaigns. 
+
+```{r}
+clust1 = kmeans(X, 5, nstart=25)
+```
+
+### CLuster 1
+
+```{r}
+head(sort((clust1$center[1,]*sigma + mu), decreasing=TRUE))
+
+```
+
+
+### Cluster 2
+
+```{r}
+head(sort((clust1$center[2,]*sigma + mu), decreasing=TRUE))
+```
+
+
+### Cluster 3
+
+```{r}
+head(sort((clust1$center[3,]*sigma + mu), decreasing=TRUE))
+```
+
+### Cluster 4
+
+```{r}
+head(sort((clust1$center[4,]*sigma + mu), decreasing=TRUE))
+
+```
+
+### Cluster 5
+
+```{r}
+head(sort((clust1$center[5,]*sigma + mu), decreasing=TRUE))
+
+```
+
+## Market Segments
+
+Our clustering analysis suggests the following market segments: 
+
+1) **Young parents:** This segment has shared posts about parenting and schooling - suggesting that they might be parents of a young child, discovering the ways of parenting. Posts about religion and sports may suggest that they're trying to generate an interest in these categories regarding these categories. 
+
+2) **Knowledgeable college students**: This segment has shown activity in categories such as college, current events, and travelling. College students travel often for vacation, studies, or internships, and thus, this segment appears to represent smart college students. 
+
+3) **Health freaks**: Cooking, health & nutrition, and personal fitness would mean that this segment is committed to maintain great health. 
+
+4) **Tech-savvy business travellers**: With posts spanning politics, technology, news, and travel, this segment possibly represents well-educated business-people who travel often for work. 
+
+5) **Millenial Influencers**: This segment indulges in shopping, fashion, and photo-sharing. They're possibly social media influencers. 
+
+As we can see, all segments generally point towards a young customer base. These segments can help our client design  better marketing rhetoric.
+
+
+
+
+
+
