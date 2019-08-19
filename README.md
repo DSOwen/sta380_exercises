@@ -54,7 +54,7 @@ Below are the types of cancellations that happen during the day.
 
 # Portfolio Modeling
 
-![](finalproj_files/figure-latex/unnamed-chunk-9-1.png)
+![](finalproj_files/figure-latex/unnamed-chunk-9-1.pdf)
 
 # Market Segmentation
 
