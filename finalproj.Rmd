@@ -146,12 +146,9 @@ plot(wealthtracker_a, type = 'l')
 plot(wealthtracker_b, type = 'l')
 plot(wealthtracker_c, type = 'l')
 ```
-<<<<<<< HEAD
+
 ```{r echo = F}
-=======
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
->>>>>>> 988da5ce24200b0c69863a3d2b96bc02db152c62
+
 initial_wealth = 100000
 sim1 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_a = initial_wealth
@@ -184,12 +181,9 @@ VAR = quantile(sim1[,n_days], .05)
 VAR
 ```
 Second Portfolio
-<<<<<<< HEAD
+
 ```{r echo = F}
-=======
-```{r}
-knitr::opts_chunk$set(echo = TRUE)
->>>>>>> 988da5ce24200b0c69863a3d2b96bc02db152c62
+
 initial_wealth = 100000
 sim2 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_b = initial_wealth
@@ -222,12 +216,9 @@ VAR = quantile(sim2[,n_days], .05)
 VAR
 ```
 Portfolio C
-<<<<<<< HEAD
+
 ```{r echo = F}
-=======
-```{r}
-knitr::opts_chunk$set(echo = TRUE)
->>>>>>> 988da5ce24200b0c69863a3d2b96bc02db152c62
+
 initial_wealth = 100000
 sim3 = foreach(i = 1:5000, .combine = "rbind")%do%{
   total_wealth_c = initial_wealth
