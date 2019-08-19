@@ -54,7 +54,12 @@ Below are the types of cancellations that happen during the day.
 
 # Portfolio Modeling
 
-(code goes here)
+Please see finalproj.rmd file for graphs/vizualizations. 
+I selected the portfolios with the intention of giving each one a different aim, despite all of the ETF's being chosen from either the China ETF category, the Japan ETF category, Euro ETF category, or the Emerging Markets category. The first portfolio was chosen by being comprised of ETF's which have the highest previous day's closing cost. It contained 5 ETF's (EDEN, GXC, CXSE, QEMM, and IEMG), with closing costs ranging from $47.99 to $87.82. The second portfolio contained 4 ETF's (FSZ, JPMV, FCA, and TUR), and those ETF's were chosen with the aim of minimizing the percent change from the previous day (in order to minimize short-term volatility). The third portfolio contained 7 ETF's (EWJ, EWL, EWN, ASHR, KFYP, GREK, and ERUS), and were chosen with the intention of maximizing YTD, in order to maximize long-term growth. 
+For the first portfolio the VaR was equal to 93091.06. That means that there is if there were no trading over the course of a day, there is a 5% chance that the stock would decrease in value by $93,091.06. 
+For the 2nd portfolio, the VaR was equal to 93291.91, and the third portfolio had a VaR of 91864.87. These both translate to roughly the same thing as did portfolio 1. 
+Looking at the histograms, portofolio 1 had a maximum value between 100000 and 102000, implying that at the very least, you would make back what you'd invested a majority of the time. Portfolio 2 had an absolute maximum value between 100000 and 101000, implying that you'd also make back your money by investing in that stock a majority of the time. Histogram 3 however had a majority of values between 98000 and 100000, implying that a majority of days, you would actually be losing money. 
+This narrows us down to Portfolio 1 and Portfolio 3. Looking back at VaR, we see that portfolio 1 has a fatter tail than portfolio 3, therefore we choose Portfolio 3 for the purpose of our experiment.
 
 # Market Segmentation
 
