@@ -1,0 +1,263 @@
+---
+title: "Author Attribution"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE, include=FALSE}
+library(tm) 
+library(magrittr)
+library(slam)
+library(proxy)
+library(e1071)
+library(randomForest)
+library(caret)
+library(naivebayes)
+library(nnet)
+library(mice)
+```
+
+### The problem is to predict the author of a given article. We have 2500 training articles of 50 different authors and the same number of test articles.
+
+```{r, echo=FALSE}
+readerPlain = function(fname){
+				readPlain(elem=list(content=readLines(fname)), 
+							id=fname, language='en') }
+```
+### Data Preprocessing
+
+The first step is to read all the files.
+```{r, echo=FALSE}
+file_list = Sys.glob('*/*/*.txt')
+data_raw = lapply(file_list, readerPlain) 
+```
+```{r, echo=FALSE}
+head(file_list)
+```
+
+The file names are messy so we can format them by taking the author name and joining it with the names of each file.
+```{r, echo=FALSE}
+mynames = file_list %>%
+	{ strsplit(., '/', fixed=TRUE) } %>%
+	{ lapply(., tail, n=2) } %>%
+	{ lapply(., paste0, collapse = '') } %>%
+	unlist
+
+names(data_raw) = mynames
+head(mynames)
+```
+
+The author names are extracted by using the file paths and extracting just the second word from the path, which is the author name
+```{r, echo=FALSE}
+author_names = file_list %>%
+  {strsplit(., '/', fixed=TRUE)} %>%
+  lapply(., `[[`, 2) %>%
+  unlist
+head(author_names)
+```
+
+Now we need to perform different transformations on the data.
+1. Convert the all the alphabets to lowercase
+2. Remove numbers and punctuations
+3. Strip whitespaces - spaces, tabs, etc
+4. Stem words. This means that words like sing, singing, sings, etc all become sing
+5. Remove stop words, that is words like the, a, to, etc, that occur frequently in English.
+```{r, echo=FALSE, include=FALSE}
+documents_raw = Corpus(VectorSource(data_raw))
+
+documents = documents_raw
+documents = tm_map(documents, content_transformer(tolower)) 
+documents = tm_map(documents, content_transformer(removeNumbers))
+documents = tm_map(documents, content_transformer(removePunctuation))
+documents = tm_map(documents, content_transformer(stripWhitespace))
+documents = tm_map(documents, content_transformer(stemDocument))
+
+documents = tm_map(documents, content_transformer(removeWords), stopwords("en"))
+```
+
+Now we create the document term matrix(DTM), which is a matrix containing the counts of word in each documents. 
+```{r,echo= FALSE}
+DTM = DocumentTermMatrix(documents)
+print(DTM)
+```
+We can see that 99% of the natrix is sparse(0 values) and we have 32021 words
+
+Now, we will remove values that are the most uncommon as they add noise to the data. We remove the terms that have count 0 in >95% of documents
+```{r, echo=FALSE}
+DTM = removeSparseTerms(DTM, 0.95)
+print(DTM)
+```
+We have 830 words and the matrix is 84% sparse.
+
+Now we convert the DTM to a data frame and add the author labels to the data frame 
+```{r, echo=FALSE}
+DTM = as.data.frame(as.matrix(DTM))
+DTM['Author'] = author_names
+DTM$Author = as.factor(DTM$Author)
+```
+
+After this, we split the data into train and test sets. The first 2500 observations go into the training set and the rest go in the test set.
+```{r, echo=FALSE}
+train_DTM = DTM[1:2500,]
+test_DTM = DTM[2501:5000,]
+```
+
+Now we create the Term Frequency–Inverse Document Frequency (tf-idf) matrix. We add the author names and split it, similar to the way we did for the DTM.
+```{r, include=FALSE}
+tfidf = weightTfIdf(removeSparseTerms(DocumentTermMatrix(documents), 0.95))
+tfidf = as.data.frame(as.matrix(tfidf))
+
+tfidf['Author'] = author_names
+tfidf$Author = as.factor(tfidf$Author)
+
+train_tfidf = tfidf[1:2500,]
+test_tfidf = tfidf[2501:5000,]
+```
+
+### Predictive Modelling
+
+First we will run a random forest model on the DTM data. 
+```{r, echo=FALSE}
+set.seed(666)
+DTM_classifier <- randomForest(x = train_DTM[-831], 
+                           y = train_DTM$Author,
+                           nTree = 10)
+DTM_predicted_values = predict(DTM_classifier, test_DTM[-831])
+print(sum(diag(table(DTM_predicted_values, test_DTM$Author)))/sum(table(DTM_predicted_values, test_DTM$Author)))
+```
+The accuracy on the test data is 62.12%.
+
+The plot below gives the list of important variables
+```{r, echo=FALSE}
+varImpPlot(DTM_classifier)
+```
+
+Using the variable importance values, we take the 250 most important and rerun the model with just those variables 
+```{r, echo=FALSE}
+set.seed(666)
+importanceOrder = order(-DTM_classifier$importance)
+names = rownames(DTM_classifier$importance)[importanceOrder]
+names = names[c(1:250)]
+imp_train_DTM = train_DTM[, names]
+imp_test_DTM = test_DTM[, names]
+imp_DTM_classifier <- randomForest(x = imp_train_DTM, 
+                           y = train_DTM$Author,
+                           nTree = 10)
+imp_DTM_predicted_values = predict(imp_DTM_classifier, imp_test_DTM)
+print(sum(diag(table(imp_DTM_predicted_values, test_DTM$Author)))/sum(table(imp_DTM_predicted_values, test_DTM$Author)))
+```
+The accuracy is now 58.88% which is close to the accuracy with the model with all the variables.
+
+On running the Random Forest model on the tfidf data and we get 61.16% accuracy.
+```{r, echo=FALSE}
+set.seed(666)
+tfidf_classifier <- randomForest(x = train_tfidf[-831], 
+                           y = train_tfidf$Author,
+                           nTree = 10)
+tfidf_predicted_values = predict(tfidf_classifier, test_tfidf[-831])
+print(sum(diag(table(tfidf_predicted_values, test_DTM$Author)))/sum(table(tfidf_predicted_values, test_DTM$Author)))
+```
+
+Similar to the DTM, we find the important variables and re-run the model.
+```{r, echo=FALSE}
+varImpPlot(tfidf_classifier)
+```
+
+```{r, echo=FALSE}
+set.seed(666)
+importanceOrder = order(-tfidf_classifier$importance)
+names = rownames(tfidf_classifier$importance)[importanceOrder]
+names = names[c(1:300)]
+imp_train_tfidf = train_tfidf[, names]
+imp_test_tfidf = test_tfidf[, names]
+imp_tfidf_classifier <- randomForest(x = imp_train_tfidf, 
+                           y = train_tfidf$Author,
+                           nTree = 10)
+imp_tfidf_predicted_values = predict(imp_tfidf_classifier, imp_test_tfidf)
+sum(diag(table(imp_tfidf_predicted_values, test_tfidf$Author)))/sum(table(imp_tfidf_predicted_values, test_tfidf$Author))
+```
+The accuracy is 60.12% which is almost the same as the accuracy with all variables on the tfidf data.
+
+### Principal Component Analysis
+
+First we run the PCA on the DTM data
+```{r, echo=FALSE}
+set.seed(666)
+pca_DTM = prcomp(train_DTM[-831])
+std_dev = pca_DTM$sdev
+pr_var = std_dev^2
+prop_varex <- pr_var/sum(pr_var)
+plot(cumsum(prop_varex), xlab = "Principal Component",
+             ylab = "Proportion of Variance Explained",
+             type = "b")
+```
+
+On plotting the proportion of variance explained for each Principal Components, we can see that around 400 Principal Components explain 80% of the variance in the data.
+
+We run the Random Forest Model again on this data. A point to be noted here is that we cannot run PCA on the train and test data together. Nor can we run PCA on train data and then use it to predict the test data values. 
+
+So we take the transformations of the training data and use them to change the test data. This can be done simply by using the predict function
+
+Now we test our model on this new transformed data.
+
+```{r, echo=FALSE}
+set.seed(666)
+train_pca = data.frame(Author = train_DTM$Author, pca_DTM$x)
+train_pca = train_pca[, 1:400]
+pca_classifier <- randomForest(x = train_pca[-1], 
+                           y = train_pca$Author,
+                           nTree = 10)
+
+test_pca = predict(pca_DTM, newdata = test_DTM[-831])
+test_pca = as.data.frame(test_pca)
+test_pca = data.frame(Author = test_DTM$Author, test_pca)
+
+pca_predicted_values = predict(pca_classifier, test_pca[-1])
+print(sum(diag(table(pca_predicted_values, test_pca$Author)))/sum(table(pca_predicted_values, test_pca$Author)))
+```
+We get an accuracy of 47.64% Which is not as good as the accuracy of the model run on the actual variables instead of the Principal Components.
+
+Now we will perform the same steps for the tfidf data.
+
+```{r, echo=FALSE}
+set.seed(666)
+pca_tfidf = prcomp(train_tfidf[-831])
+std_dev = pca_tfidf$sdev
+pr_var = std_dev^2
+prop_varex <- pr_var/sum(pr_var)
+plot(cumsum(prop_varex), xlab = "Principal Component",
+             ylab = "Proportion of Variance Explained",
+             type = "b")
+```
+
+Here, around 350 Principle Components explain 80% of the variance so run the model with that many PCs and get an accuracy of 52.84% which is much better than the accuracy on the DTM-PC model.
+
+```{r, echo=FALSE} 
+set.seed(666)
+train_pca_tfidf = data.frame(Author = train_tfidf$Author, pca_tfidf$x)
+train_pca_tfidf = train_pca_tfidf[, 1:350]
+pca_classifier_tfidf = randomForest(x = train_pca_tfidf[-1], 
+                           y = train_pca_tfidf$Author,
+                           nTree = 10)
+
+test_pca_tfidf = predict(pca_tfidf, newdata = test_tfidf[-831])
+test_pca = as.data.frame(test_pca_tfidf)
+test_pca_tfidf = data.frame(Author = test_tfidf$Author, test_pca_tfidf)
+
+pca_predicted_values_tfidf = predict(pca_classifier_tfidf, test_pca_tfidf[-1])
+sum(diag(table(pca_predicted_values_tfidf, test_pca_tfidf$Author)))/sum(table(pca_predicted_values_tfidf, test_pca_tfidf$Author))
+```
+
+We also tried a naive bayes model on the tfidf principle components data and got an accuracy of 47.08%.
+```{r, echo=FALSE}
+set.seed(666)
+nb_model = naiveBayes(x = train_pca_tfidf[-1], 
+                           y = train_pca_tfidf$Author, laplace = 1)
+nb_predicted_values = predict(nb_model, newdata = test_pca_tfidf[-1])
+sum(diag(table(nb_predicted_values, test_pca_tfidf$Author)))/sum(table(nb_predicted_values, test_pca_tfidf$Author))
+```
+
+Based on the models we have run, the Random Forest Model on the DTM data with the 250 variables is the best one. Even though the model with all variables gives a slightly better accuracy, the selected model makes up for it by being less complex.
