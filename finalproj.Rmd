@@ -1,0 +1,263 @@
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+Uploading the libraries
+```{r}
+library(mosaic)
+library(quantmod)
+library(foreach)
+```
+
+Importing the stocks that we want to use
+```{r}
+port1 <- c("EDEN", "GXC", "CXSE", "QEMM", "IEMG")
+
+port2 <- c("FSZ", "JPMV",  "FCA", "TUR")
+
+port3 <- c("EWJ", "EWL", "EWN", "ASHR", "KFYP", "GREK", "ERUS")
+
+port1.data <- getSymbols(port1, from = "2014-01-01")
+port2.data <- getSymbols(port2, from = "2014-01-01")
+port3.data <- getSymbols(port3, from = "2014-01-01")
+
+
+```
+
+Adjusting for splits and dividends
+```{r}
+EDENa <- adjustOHLC(EDEN)
+GXCa <- adjustOHLC(GXC)
+CXSEa <- adjustOHLC(CXSE)
+QEMMa <- adjustOHLC(QEMM)
+IEMGa <- adjustOHLC(IEMG)
+
+FSZb <- adjustOHLC(FSZ)
+JPMVb <- adjustOHLC(JPMV)
+FCAb <- adjustOHLC(FCA)
+TURb <- adjustOHLC(TUR)
+
+EWJc <- adjustOHLC(EWJ)
+EWLc <- adjustOHLC(EWL)
+EWNc <- adjustOHLC(EWN)
+ASHRc <- adjustOHLC(ASHR)
+KFYPc <- adjustOHLC(KFYP)
+GREKc <- adjustOHLC(GREK)
+ERUSc <- adjustOHLC(ERUS)
+```
+
+Combining close to close changes in a single matrix
+```{r}
+all_returns_a <- cbind(ClCl(EDENa),ClCl(GXCa), ClCl(CXSEa),ClCl(QEMMa),ClCl(IEMGa))
+all_returns_b <- cbind(ClCl(FSZb),ClCl(JPMVb), ClCl(FCAb),ClCl(TURb))
+all_returns_c <- cbind(ClCl(EWJc),ClCl(EWLc), ClCl(EWNc),ClCl(ASHRc),ClCl(KFYPc),ClCl(GREKc),ClCl(ERUSc))
+
+all_returns_a = as.matrix(na.omit(all_returns_a))
+all_returns_b = as.matrix(na.omit(all_returns_b))
+all_returns_c = as.matrix(na.omit(all_returns_c))
+
+print("Portfolio a: ")
+head(all_returns_a)
+print("")
+print("Portfolio b: ")
+head(all_returns_b)
+print("")
+print("Portfolio c: ")
+head(all_returns_c)
+```
+Computing the returns from the closing prices
+```{r}
+pairs(all_returns_a)
+pairs(all_returns_b)
+pairs(all_returns_c)
+```
+Sampling a random return from the empirical joint distribution 
+```{r}
+set.seed(45)
+return.today_a <- resample(all_returns_a, 1, orig.ids = FALSE)
+return.today_b <- resample(all_returns_b, 1, orig.ids = FALSE)
+return.today_c <- resample(all_returns_c, 1, orig.ids = FALSE)
+```
+
+Update the value of my holdings, starting with an equal distribution to each asset
+```{r}
+set.seed(45)
+total_wealth = 100000
+my_weights_a <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+my_weights_b <- c(0.25, 0.25, 0.25, 0.25)
+my_weights_c <- c(0.14, 0.14, 0.15, 0.14, 0.14, 0.14, 0.15)
+
+holdings_a <- total_wealth*my_weights_a
+holdings_b <- total_wealth*my_weights_b
+holdings_c <- total_wealth*my_weights_c
+
+holdings_a <- holdings_a*(1+return.today_a)
+holdings_b <- holdings_b*(1+return.today_b)
+holdings_c <- holdings_c*(1+return.today_c)
+
+total_wealth_a <- sum(holdings_a)
+total_wealth_b <- sum(holdings_b)
+total_weatlh_c <- sum(holdings_c)
+
+total_wealth_a
+total_wealth_b
+total_weatlh_c
+```
+Loop over 4 trading weeks
+```{r}
+set.seed(45)
+total_wealth = 100000
+my_weights_a <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+my_weights_b <- c(0.25, 0.25, 0.25, 0.25)
+my_weights_c <- c(0.14, 0.14, 0.15, 0.14, 0.14, 0.14, 0.15)
+
+holdings_a <- total_wealth*my_weights_a
+holdings_b <- total_wealth*my_weights_b
+holdings_c <- total_wealth*my_weights_c
+
+n_days = 20
+wealthtracker_a = rep(0, n_days)
+wealthtracker_b = rep(0, n_days)
+wealthtracker_c = rep(0, n_days)
+for(today in 1:n_days){
+  return.today_a <- resample(all_returns_a, 1, orig.ids = FALSE)
+  return.today_b <- resample(all_returns_b, 1, orig.ids = FALSE)
+  return.today_c <- resample(all_returns_c, 1, orig.ids = FALSE) 
+  
+  holdings_a <- holdings_a*(1+return.today_a)
+  holdings_b <- holdings_b*(1+return.today_b)
+  holdings_c <- holdings_c*(1+return.today_c)
+  
+  total_wealth_a <- sum(holdings_a)
+  total_wealth_b <- sum(holdings_b)
+  total_wealth_c <- sum(holdings_c)
+  
+  wealthtracker_a[today] = total_wealth_a
+  wealthtracker_b[today] = total_wealth_b
+  wealthtracker_c[today] = total_wealth_c
+  
+}
+
+total_wealth_a
+total_wealth_b
+total_wealth_c
+
+plot(wealthtracker_a, type = 'l')
+plot(wealthtracker_b, type = 'l')
+plot(wealthtracker_c, type = 'l')
+```
+```{r}
+initial_wealth = 100000
+sim1 = foreach(i = 1:5000, .combine = "rbind")%do%{
+  total_wealth_a = initial_wealth
+  
+  my_weights_a <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+  
+  holdings_a <- my_weights_a*total_wealth_a
+  
+  n_days = 20
+  
+  wealthtracker_a = rep(0, n_days)
+  
+  for(today in 1:n_days){
+    return.today_a <- resample(all_returns_a, 1, orig.ids = FALSE)
+  
+    holdings_a <- holdings_a*(1+return.today_a)
+  
+    total_wealth_a <- sum(holdings_a)
+  
+    wealthtracker_a[today] = total_wealth_a
+  }
+  wealthtracker_a
+
+  
+}
+head(sim1)
+hist(sim1[,n_days], labels = TRUE,25)
+
+VAR = quantile(sim1[,n_days], .05)
+VAR
+```
+Second Portfolio
+```{r}
+initial_wealth = 100000
+sim2 = foreach(i = 1:5000, .combine = "rbind")%do%{
+  total_wealth_b = initial_wealth
+  
+  my_weights_b <- c(0.25, 0.25, 0.25, 0.25)
+  
+  holdings_b <- my_weights_b*total_wealth_b
+  
+  n_days = 20
+  
+  wealthtracker_b = rep(0, n_days)
+  
+  for(today in 1:n_days){
+    return.today_b <- resample(all_returns_b, 1, orig.ids = FALSE)
+  
+    holdings_b <- holdings_b*(1+return.today_b)
+  
+    total_wealth_b <- sum(holdings_b)
+  
+    wealthtracker_b[today] = total_wealth_b
+  }
+  wealthtracker_b
+
+  
+}
+head(sim2)
+hist(sim2[,n_days], labels = TRUE,25)
+
+VAR = quantile(sim2[,n_days], .05)
+VAR
+```
+Portfolio C
+```{r}
+initial_wealth = 100000
+sim3 = foreach(i = 1:5000, .combine = "rbind")%do%{
+  total_wealth_c = initial_wealth
+  
+  my_weights_c <- c(0.14, 0.14, 0.15, 0.14, 0.14, 0.14, 0.15)
+  
+  holdings_c <- my_weights_c*total_wealth_c
+  
+  n_days = 20
+  
+  wealthtracker_c = rep(0, n_days)
+  
+  for(today in 1:n_days){
+    return.today_c <- resample(all_returns_c, 1, orig.ids = FALSE)
+  
+    holdings_c <- holdings_c*(1+return.today_c)
+  
+    total_wealth_c <- sum(holdings_c)
+  
+    wealthtracker_c[today] = total_wealth_c
+  }
+  wealthtracker_c
+
+  
+}
+head(sim3)
+hist(sim3[,n_days], labels = TRUE, 25)
+
+VAR = quantile(sim3[,n_days], .05)
+VAR
+```
+I selected the portfolios with the intention of giving each one a different aim, despite all of the ETF's being chosen from either the China ETF category, the Japan ETF category, Euro ETF category, or the Emerging Markets category. The first portfolio was chosen by being comprised of ETF's which have the highest previous day's closing cost. It contained 5 ETF's (EDEN, GXC, CXSE, QEMM, and IEMG), with closing costs ranging from $47.99 to $87.82. The second portfolio contained 4 ETF's (FSZ, JPMV, FCA, and TUR), and those ETF's were chosen with the aim of minimizing the percent change from the previous day (in order to minimize short-term volatility). The third portfolio contained 7 ETF's (EWJ, EWL, EWN, ASHR, KFYP, GREK, and ERUS), and were chosen with the intention of maximizing YTD, in order to maximize long-term growth. 
+For the first portfolio the VaR was equal to 93091.06. That means that there is if there were no trading over the course of a day, there is a 5% chance that the stock would decrease in value by $93,091.06. 
+For the 2nd portfolio, the VaR was equal to 93291.91, and the third portfolio had a VaR of 91864.87. These both translate to roughly the same thing as did portfolio 1. 
+Looking at the histograms, portofolio 1 had a maximum value between 100000 and 102000, implying that at the very least, you would make back what you'd invested a majority of the time. Portfolio 2 had an absolute maximum value between 100000 and 101000, implying that you'd also make back your money by investing in that stock a majority of the time. Histogram 3 however had a majority of values between 98000 and 100000, implying that a majority of days, you would actually be losing money. 
+This narrows us down to Portfolio 1 and Portfolio 3. Looking back at VaR, we see that portfolio 1 has a fatter tail than portfolio 3, therefore we choose Portfolio 3 for the purpose of our experiment. 
+
+
+
+
+
+
+
+
+
+
