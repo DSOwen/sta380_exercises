@@ -15,7 +15,7 @@ buildings = read.csv('greenbuildings.csv')
 
 ```
 ## Initial Data Processing
-```{r}
+```{r echo = F}
 #converting categorical variables to factors
 buildings$green_rating = as.factor(buildings$green_rating)
 buildings$LEED = as.factor(buildings$LEED)
@@ -28,7 +28,7 @@ buildings$net = as.factor(buildings$net)
 ```
 
 
-```{r}
+```{r echo = F}
 #creating a separate class variable
 buildings$class = ifelse(buildings$class_a == 1, 'A', ifelse(buildings$class_b == 1, 'B', 'C'))
 ```
@@ -38,11 +38,11 @@ buildings$class = ifelse(buildings$class_a == 1, 'A', ifelse(buildings$class_b =
 At first glance, it appears that the on-staff stats guru makes valid points about the situaton. 
 
 As can be seen below, there is indeed a $2.6 difference in green and non-green buildings. We control for occupancy rates >10%.
-```{r}
+```{r echo = F}
 buildings %>% filter(leasing_rate>=10)%>% group_by(green_rating) %>% summarise(med_rent = median(Rent), count = n())
 ```
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(green_rating, Rent)) + geom_boxplot()
 ```
 
@@ -50,13 +50,13 @@ Non-green buildings also have a lot more outliers, and hence the guru's rational
 
 ### Rent vs. Occupancy Rates
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(leasing_rate, Rent, color = green_rating)) + geom_point()
 ```
 
 Although the minimum rent holds constant for all values of occupancy rates, it shows a subtle increasing trend with increasing occupancy rates. Let us explore if green buildings have higher occupancy rates. 
 
-```{r}
+```{r echo = F}
 buildings %>% group_by(green_rating) %>% summarise(med_occupancy = median(leasing_rate), count = n())
 ```
 
@@ -69,7 +69,7 @@ The guru's assumption of 90% occupancy rates for the proposed green building is 
 
 Are younger buildings more or less likely to be occupied?
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(age, leasing_rate, color = green_rating)) + geom_point()
 
 ```
@@ -84,7 +84,7 @@ Next, we explore the possibilites of any confounding factors that might indirect
 
 Most green buildings (72%) have amenities (only ~52% in case of non-green), so could this be a factor in raising the rents for green buildings?
 
-```{r}
+```{r echo = F}
 buildings %>% group_by(green_rating, amenities) %>% summarise(med_rent = median(Rent), count = n())
 
 ```
@@ -93,14 +93,14 @@ Controlling for amenities, i.e. comparing rents for green & non-green buildings 
 
 ### 2. Number of stories
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(stories, Rent, color = green_rating)) + geom_point()
 
 ```
 
 The minimum rent shows an increase with increasing number of stories. Our client may thus be able to demand a higher rent with a taller building. 
 
-```{r}
+```{r echo = F}
 buildings %>% group_by(green_rating) %>% summarise(med_stories = median(stories))
 ```
 
@@ -108,13 +108,13 @@ Green buildings are in general 1 storey higher than non-green building, but this
 
 
 ### 3. Size
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(size, Rent, color = green_rating)) + geom_point()
 ```
 
 From the graph above, we can see that the rent increases with increasing available leasing space.
 
-```{r}
+```{r echo = F}
 buildings %>% group_by(green_rating)%>%
 summarize(med_size = median(size), mean_size = mean(size))
 ```
@@ -123,13 +123,13 @@ Green buildings also appear to have more leasing space in general, and thus, siz
 
 ### 4. Age
 
-```{r}
+```{r echo = F}
 buildings %>% group_by(green_rating) %>% summarise(med_age = median(age), count = n())
 ```
 
 Green buildings are younger by around 15 years. Do newer buildings in general demand higher rent?
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(age, Rent, color = green_rating)) + geom_point()
 
 ```
@@ -138,7 +138,7 @@ There doesn't appear to be a particular relationship between age and rent, and h
 
 
 
-```{r}
+```{r echo = F}
 buildings$revenue = 1.000*(buildings$size * buildings$Rent * buildings$leasing_rate)/100
 ```
 
@@ -150,13 +150,13 @@ summary(buildings$revenue)
 
 Can revenue for green buildings be maximised by choosing the right locations to build them?
 
-```{r}
+```{r echo = F}
 ggplot(buildings, aes(cluster, Rent, color = green_rating)) + geom_point()
 ```
 
 
 
-```{r}
+```{r echo = F}
 buildings %>% filter(cluster>=430 & cluster<=600) %>% group_by(green_rating) %>%summarise(med = median(Rent), count = n())
 ```
 
